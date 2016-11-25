@@ -247,22 +247,15 @@ namespace Sweetie_bot
                     if (e.Message.Text.StartsWith("_") & e.Message.Text.EndsWith("_") & e.Message.Text.ToLower().Contains("sweetie"))
                     {
                         Random rand = new Random();
-                        if (e.User.Id == 193602426845003776 & (rand.Next(0,10)<=9))//Equestrums ID. To be honest this is very petty, but he will never know
+                        if (nsfwChannels.Contains(e.Channel.Name))
                         {
-                            await e.Channel.SendMessage(string.Format("_shrinks away from {0}._", e.User.Name));
+                            int responseNum = rand.Next(0, meResponsesLewd.Union(meResponsesClean).ToArray().Count());
+                            await e.Channel.SendMessage(string.Format("_" + meResponsesLewd.Union(meResponsesClean).ToArray()[responseNum] + "_", e.User.Name));
                         }
                         else
                         {
-                            if (nsfwChannels.Contains(e.Channel.Name))
-                            {
-                                int responseNum = rand.Next(0, meResponsesLewd.Union(meResponsesClean).ToArray().Count());
-                                await e.Channel.SendMessage(string.Format("_" + meResponsesLewd.Union(meResponsesClean).ToArray()[responseNum] + "_", e.User.Name));
-                            }
-                            else
-                            {
-                                int responseNum = rand.Next(1, meResponsesClean.Count());
-                                await e.Channel.SendMessage(string.Format("_" + meResponsesClean[responseNum] + "_", e.User.Name));
-                            }
+                            int responseNum = rand.Next(1, meResponsesClean.Count());
+                            await e.Channel.SendMessage(string.Format("_" + meResponsesClean[responseNum] + "_", e.User.Name));
                         }
                     }
                 }
