@@ -111,13 +111,6 @@ namespace Sweetie_bot
                 x.HelpMode = HelpMode.Private;
             });
 
-#if DEBUG
-            _client.GetService<CommandService>().CreateCommand("test")
-                .Do(async e =>
-                {
-                    await e.Channel.SendMessage("\\expressionless");
-                });
-#endif
             _client.GetService<CommandService>().CreateCommand("Rules")
                 .Description("Display the server rules.")
                 .Do(async e =>
