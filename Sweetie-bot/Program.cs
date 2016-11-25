@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 
 namespace Sweetie_bot
@@ -174,7 +174,7 @@ namespace Sweetie_bot
                         if (!e.User.HasRole(e.Server.FindRoles("Filly Scout").ToArray()[0])) {
                             await e.User.AddRoles(e.Server.FindRoles("@everypone").ToArray());
                             await e.Channel.SendMessage(string.Format("There you go {0}.", e.User.ToString()));
-                            System.Threading.Thread.Sleep(100);
+                            Thread.Sleep(100);
                             await e.Channel.SendMessage("Now you can join the loli/shota channels with `!Loli join`");
                         }
                         else
@@ -265,13 +265,13 @@ namespace Sweetie_bot
             {
                 Console.WriteLine("New person! Said hi to {0}.", e.User.Name);
                 await e.User.SendMessage("Welcome to the Crusaders Clubhouse!");
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
                 await e.User.SendMessage("Im the local bot, Sweetie-Bot! \n I do a *lot* of cool things.");
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
                 await e.User.SendMessage("If you are 18, confirm it by typing '!Iam18' in the general chat and I will add you to the 18+ channels.");
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
                 await e.User.SendMessage("I can't tell you everything I can do right now, that would take up too much space! Type '!rules' to get the server rules at anytime, and '!help' to find out all the other stuff I can do.");
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
                 await e.User.SendMessage("I hope you have a fun time here!");
             };
 
