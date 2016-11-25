@@ -12,6 +12,7 @@ namespace Sweetie_bot
     using Discord.Commands;
     using System.IO;
     using System.Timers;
+    using System.Text.RegularExpressions;
 
     class Program
     {
@@ -220,31 +221,27 @@ namespace Sweetie_bot
             {
                 if (!e.Message.IsAuthor)
                 {
-                    if (e.Message.RawText.StartsWith("hey sweetie, ", StringComparison.OrdinalIgnoreCase)|
-                        e.Message.RawText.StartsWith("sweetie, ", StringComparison.OrdinalIgnoreCase))
+                    if (Regex.Match(e.Message.Text, "^(hey)? sweetie, [A-z]+.*\\?$", RegexOptions.IgnoreCase).Success)
                     {
-                        if (e.Message.RawText.EndsWith("?", StringComparison.OrdinalIgnoreCase))
+                        Random rand = new Random();
+                        if (nsfwChannels.Contains(e.Channel.Name))
                         {
-                            Random rand = new Random();
-                            if (nsfwChannels.Contains(e.Channel.Name))
-                            {
-                                int magic8 = rand.Next(0, magic8nsfw.Union(magic8phrases).ToArray().Count());
-                                await e.Channel.SendMessage(magic8nsfw.Union(magic8phrases).ToArray()[magic8]);
-                            }
-                            else
-                            {
-                                int magic8 = rand.Next(1, magic8phrases.Count());
-                                   await e.Channel.SendMessage(magic8phrases[magic8]);
-                            }
+                            int magic8 = rand.Next(0, magic8nsfw.Union(magic8phrases).ToArray().Count());
+                            await e.Channel.SendMessage(magic8nsfw.Union(magic8phrases).ToArray()[magic8]);
+                        }
+                        else
+                        {
+                            int magic8 = rand.Next(1, magic8phrases.Count());
+                                await e.Channel.SendMessage(magic8phrases[magic8]);
                         }
                     }
 
                     if (e.Channel.IsPrivate)
                     {
                         Console.WriteLine("{0}: {1}", e.User.Name, e.Message.Text);
-                    }
+                    } 
 
-                    if (e.Message.Text.StartsWith("_") & e.Message.Text.EndsWith("_") & e.Message.Text.ToLower().Contains("sweetie"))
+                    if (Regex.Match(e.Message.Text, "^_[A-z ]*sweetie[A-z ]*_$", RegexOptions.IgnoreCase).Success)
                     {
                         Random rand = new Random();
                         if (nsfwChannels.Contains(e.Channel.Name))
