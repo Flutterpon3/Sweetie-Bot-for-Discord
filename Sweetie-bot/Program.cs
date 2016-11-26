@@ -214,7 +214,7 @@ namespace Sweetie_bot
             {
                 if (!e.Message.IsAuthor)
                 {
-                    if (Regex.Match(e.Message.Text, "^(hey)? sweetie, [A-z]+.*\\?$", RegexOptions.IgnoreCase).Success)
+                    if (Regex.Match(e.Message.Text, "^(hey )?sweetie, .*\\?$", RegexOptions.IgnoreCase).Success)
                     {
                         Random rand = new Random();
                         if (nsfwChannels.Contains(e.Channel.Name))
@@ -234,7 +234,7 @@ namespace Sweetie_bot
                         Console.WriteLine("{0}: {1}", e.User.Name, e.Message.Text);
                     } 
 
-                    if (Regex.Match(e.Message.Text, "^_[A-z ]*sweetie[A-z ]*_$", RegexOptions.IgnoreCase).Success)
+                    if (Regex.Match(e.Message.Text, "^_.*sweetie.*_$", RegexOptions.IgnoreCase).Success)
                     {
                         Random rand = new Random();
                         if (nsfwChannels.Contains(e.Channel.Name))
