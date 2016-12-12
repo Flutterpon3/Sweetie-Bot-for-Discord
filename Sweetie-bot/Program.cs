@@ -11,6 +11,43 @@ namespace Sweetie_bot
     using System.IO;
     using System.Timers;
 
+    public class ProfanityCounter
+    {
+        private Timer profanityTimer;
+        int count;
+
+        public ProfanityCounter()
+        {
+            count = 0;
+            profanityTimer = new Timer(20 * 1000);
+            profanityTimer.Elapsed += sub;
+            profanityTimer.AutoReset = true;
+            profanityTimer.Start();
+        }
+
+        ~ProfanityCounter()
+        {
+            profanityTimer.Stop();
+            profanityTimer.Dispose();
+            profanityTimer = null;
+        }
+
+        public int add()
+        {
+            profanityTimer.Stop();
+            profanityTimer.Start();
+            count++;
+            if (count > 6) count = 6;
+            return count;
+        }
+
+        private void sub(Object source, ElapsedEventArgs e)
+        {
+            count--;
+            if (count < 0) count = 0;
+        }
+    }
+
     class Program
     {
 
@@ -28,6 +65,8 @@ namespace Sweetie_bot
         private static Timer pokeTimer = new Timer(60 * 1000);
 
         private DiscordClient _client;
+
+        private CensorshipManager censorshipManager;
 
         List<string> meResponsesClean = new List<string>()
         {
@@ -95,11 +134,28 @@ namespace Sweetie_bot
             "mlp-loli-x-shota"
         });
 
+        Dictionary<string, ProfanityCounter> userProfanityCount = new Dictionary<string, ProfanityCounter>();
+
+        List<string> profaneMessageResponses = new List<string>(new string[]
+        {
+            "Your message contained profanity, please replace the underlined content or post your message in a NSFW channel.",
+            "I asked you nicely before, would you please replace the profane content of your message?",
+            "Pretty please with a cherry on top?",
+            "I'll ask again... PLEASE replace the profane content in your message!",
+            "You're making fun of me, aren't you?",
+            ".....",
+            "You know what... I showed that last message of yours to a certain somepony, and do you want to know what you've done?\rYou made Fluttershy cry!"
+        });
+
         public void Start()
         {
             pokeTimer.Elapsed += resetpokeState;
             pokeTimer.AutoReset = true;
             pokeTimer.Start();
+
+
+            censorshipManager = new CensorshipManager();
+            censorshipManager.Initialize();
 
             _client = new DiscordClient();
 
@@ -107,6 +163,8 @@ namespace Sweetie_bot
                 x.PrefixChar = '!';
                 x.HelpMode = HelpMode.Private;
             });
+
+
 
 #if DEBUG
             _client.GetService<CommandService>().CreateCommand("test")
@@ -169,7 +227,8 @@ namespace Sweetie_bot
                 {
                     if (!e.Message.Channel.IsPrivate)
                     {
-                        if (!e.User.HasRole(e.Server.FindRoles("Filly Scout").ToArray()[0])) {
+                        if (!e.User.HasRole(e.Server.FindRoles("Filly Scout").ToArray()[0]))
+                        {
                             await e.User.AddRoles(e.Server.FindRoles("@everypone").ToArray());
                             await e.Channel.SendMessage(string.Format("There you go {0}.", e.User.ToString()));
                             System.Threading.Thread.Sleep(100);
@@ -187,20 +246,20 @@ namespace Sweetie_bot
                 loli.CreateCommand("join")
                     .Description("If you have confirmed your age, join the loli/shota chats.")
                     .Do(async e =>
-                     {
-                         if (!e.Message.Channel.IsPrivate)
-                         {
-                             if (e.User.HasRole(e.Server.FindRoles("@everypone").ToArray()[0]))
-                             {
-                                 await e.User.AddRoles(e.Server.FindRoles("obsessed with hands").ToArray());
-                                 await e.Channel.SendMessage("You're in the loli channels now. :raritywink: \nLeave any time with `!loli leave`");
-                             }
-                             else
-                             {
-                                 await e.Channel.SendMessage("You have to confirm you are 18 first silly~");
-                             }
-                         }
-                     });
+                    {
+                        if (!e.Message.Channel.IsPrivate)
+                        {
+                            if (e.User.HasRole(e.Server.FindRoles("@everypone").ToArray()[0]))
+                            {
+                                await e.User.AddRoles(e.Server.FindRoles("obsessed with hands").ToArray());
+                                await e.Channel.SendMessage("You're in the loli channels now. :raritywink: \nLeave any time with `!loli leave`");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("You have to confirm you are 18 first silly~");
+                            }
+                        }
+                    });
 
                 loli.CreateCommand("leave")
                     .Description("Remove your access to the loli/shota chats.")
@@ -218,7 +277,36 @@ namespace Sweetie_bot
             {
                 if (!e.Message.IsAuthor)
                 {
-                    if (e.Message.RawText.StartsWith("hey sweetie, ", StringComparison.OrdinalIgnoreCase)|
+
+                    if (!nsfwChannels.Contains(e.Channel.Name))
+                    {
+                        string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
+                        if (!filtered.Equals(e.Message.Text))
+                        {
+                            await e.Message.Delete();
+
+                            int count = 0;
+                            if (!userProfanityCount.ContainsKey(e.User.Name))
+                                userProfanityCount.Add(e.User.Name, new ProfanityCounter());
+                            else
+                                count = userProfanityCount[e.User.Name].add();
+
+                            //string underlinedMessage = censorshipManager.censor.Underline(e.Message.Text, filtered);
+                            string outputMessage;
+                            if (count < 3) outputMessage = censorshipManager.censor.Underline(e.Message.Text, filtered);
+                            else if (count < 6) outputMessage = censorshipManager.censor.BoldUnderline(e.Message.Text, filtered);
+                            else
+                            {
+                                outputMessage = censorshipManager.censor.FlutterCryFilter(e.Message.Text, filtered);
+                                await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
+                            }
+
+                            await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                        }
+                    }
+
+
+                    if (e.Message.RawText.StartsWith("hey sweetie, ", StringComparison.OrdinalIgnoreCase) |
                         e.Message.RawText.StartsWith("sweetie, ", StringComparison.OrdinalIgnoreCase))
                     {
                         if (e.Message.RawText.EndsWith("?", StringComparison.OrdinalIgnoreCase))
@@ -232,7 +320,7 @@ namespace Sweetie_bot
                             else
                             {
                                 int magic8 = rand.Next(1, magic8phrases.Count());
-                                   await e.Channel.SendMessage(magic8phrases[magic8]);
+                                await e.Channel.SendMessage(magic8phrases[magic8]);
                             }
                         }
                     }
@@ -255,7 +343,7 @@ namespace Sweetie_bot
                             int responseNum = rand.Next(1, meResponsesClean.Count());
                             await e.Channel.SendMessage(string.Format("_" + meResponsesClean[responseNum] + "_", e.User.Name));
                         }
-                        
+
                     }
                 }
             };
