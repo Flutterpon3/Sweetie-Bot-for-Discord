@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 
 
 namespace Sweetie_bot
@@ -12,8 +10,6 @@ namespace Sweetie_bot
     using Discord.Commands;
     using System.IO;
     using System.Timers;
-    using System.Text.RegularExpressions;
-    using Discord.Commands.Permissions;
 
     class Program
     {
@@ -27,13 +23,6 @@ namespace Sweetie_bot
         private void resetpokeState(Object source, ElapsedEventArgs e)
         {
             pokeState = 0;
-        }
-
-        private void endTimeout(object sender, ElapsedEventArgs e, CommandEventArgs ev,  ulong userID, Role banrole)
-        {
-            Console.Write(string.Format("USER TIMEOUT EXPIRE: {0}", ev.Server.GetUser(userID).ToString()));
-            ev.Server.GetUser(userID).RemoveRoles(banrole);
-            
         }
 
         private static Timer pokeTimer = new Timer(60 * 1000);
@@ -119,40 +108,19 @@ namespace Sweetie_bot
                 x.HelpMode = HelpMode.Private;
             });
 
+#if DEBUG
+            _client.GetService<CommandService>().CreateCommand("test")
+                .Do(async e =>
+                {
+                    await e.Channel.SendMessage("\\expressionless");
+                });
+#endif
             _client.GetService<CommandService>().CreateCommand("Rules")
                 .Description("Display the server rules.")
                 .Do(async e =>
                 {
                     await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
-
-            _client.GetService<CommandService>().CreateCommand("timeout")
-                .Parameter("TimeoutUser", ParameterType.Required)
-                .Parameter("TimeoutLength", ParameterType.Required)
-                .Do(async e =>
-                {
-                    if (e.User.HasRole(e.Server.GetRole(249751522018066435))){
-                        Timer timeoutCounter = new Timer(double.Parse(e.GetArg("TimeoutLength")) * 1000);
-
-                        ulong userID = ulong.Parse(e.GetArg("TimeoutUser").Trim('<', '>', '@'));
-                        
-                        User user = e.Server.GetUser(userID);
-                        Console.Write(user.ToString());
-
-                        Role banRole = e.Server.GetRole(250951663257518081);
-
-                        await user.AddRoles(banRole);
-
-                        timeoutCounter.Elapsed += (sender, ev) => endTimeout(sender, ev, e, userID, banRole);
-                        timeoutCounter.Enabled = true;
-                        timeoutCounter.AutoReset = false;
-                        timeoutCounter.Start();
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("You are not a mod.");
-                    }
-                 });
 
             _client.GetService<CommandService>().CreateCommand("poke")
                 .Description("Does... Somthing. <:raritywink:250101117055139840>")
@@ -204,7 +172,7 @@ namespace Sweetie_bot
                         if (!e.User.HasRole(e.Server.FindRoles("Filly Scout").ToArray()[0])) {
                             await e.User.AddRoles(e.Server.FindRoles("@everypone").ToArray());
                             await e.Channel.SendMessage(string.Format("There you go {0}.", e.User.ToString()));
-                            Thread.Sleep(100);
+                            System.Threading.Thread.Sleep(100);
                             await e.Channel.SendMessage("Now you can join the loli/shota channels with `!Loli join`");
                         }
                         else
@@ -224,7 +192,7 @@ namespace Sweetie_bot
                          {
                              if (e.User.HasRole(e.Server.FindRoles("@everypone").ToArray()[0]))
                              {
-                                 await e.User.AddRoles(e.Server.FindRoles("human lover").ToArray());
+                                 await e.User.AddRoles(e.Server.FindRoles("obsessed with hands").ToArray());
                                  await e.Channel.SendMessage("You're in the loli channels now. :raritywink: \nLeave any time with `!loli leave`");
                              }
                              else
@@ -240,7 +208,7 @@ namespace Sweetie_bot
                     {
                         if (!e.Message.Channel.IsPrivate)
                         {
-                            await e.User.RemoveRoles(e.Server.FindRoles("human lover").ToArray());
+                            await e.User.RemoveRoles(e.Server.FindRoles("obsessed with hands").ToArray());
                             await e.Channel.SendMessage("Im sad to see you go... Come back any time!");
                         }
                     });
@@ -250,27 +218,31 @@ namespace Sweetie_bot
             {
                 if (!e.Message.IsAuthor)
                 {
-                    if (Regex.Match(e.Message.Text, "^(hey )?sweetie, .*\\?$", RegexOptions.IgnoreCase).Success)
+                    if (e.Message.RawText.StartsWith("hey sweetie, ", StringComparison.OrdinalIgnoreCase)|
+                        e.Message.RawText.StartsWith("sweetie, ", StringComparison.OrdinalIgnoreCase))
                     {
-                        Random rand = new Random();
-                        if (nsfwChannels.Contains(e.Channel.Name))
+                        if (e.Message.RawText.EndsWith("?", StringComparison.OrdinalIgnoreCase))
                         {
-                            int magic8 = rand.Next(0, magic8nsfw.Union(magic8phrases).ToArray().Count());
-                            await e.Channel.SendMessage(magic8nsfw.Union(magic8phrases).ToArray()[magic8]);
-                        }
-                        else
-                        {
-                            int magic8 = rand.Next(1, magic8phrases.Count());
-                                await e.Channel.SendMessage(magic8phrases[magic8]);
+                            Random rand = new Random();
+                            if (nsfwChannels.Contains(e.Channel.Name))
+                            {
+                                int magic8 = rand.Next(0, magic8nsfw.Union(magic8phrases).ToArray().Count());
+                                await e.Channel.SendMessage(magic8nsfw.Union(magic8phrases).ToArray()[magic8]);
+                            }
+                            else
+                            {
+                                int magic8 = rand.Next(1, magic8phrases.Count());
+                                   await e.Channel.SendMessage(magic8phrases[magic8]);
+                            }
                         }
                     }
 
-                    if (e.Channel.IsPrivate)//So I can keep track of all the messages that people send to sweetie
+                    if (e.Channel.IsPrivate)
                     {
                         Console.WriteLine("{0}: {1}", e.User.Name, e.Message.Text);
-                    } 
+                    }
 
-                    if (Regex.Match(e.Message.Text, "^_.*sweetie.*_$", RegexOptions.IgnoreCase).Success)
+                    if (e.Message.Text.StartsWith("_") & e.Message.Text.EndsWith("_") & e.Message.Text.ToLower().Contains("sweetie"))
                     {
                         Random rand = new Random();
                         if (nsfwChannels.Contains(e.Channel.Name))
@@ -283,6 +255,7 @@ namespace Sweetie_bot
                             int responseNum = rand.Next(1, meResponsesClean.Count());
                             await e.Channel.SendMessage(string.Format("_" + meResponsesClean[responseNum] + "_", e.User.Name));
                         }
+                        
                     }
                 }
             };
@@ -291,13 +264,15 @@ namespace Sweetie_bot
             {
                 Console.WriteLine("New person! Said hi to {0}.", e.User.Name);
                 await e.User.SendMessage("Welcome to the Crusaders Clubhouse!");
-                Thread.Sleep(500);
+                System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("Im the local bot, Sweetie-Bot! \n I do a *lot* of cool things.");
-                Thread.Sleep(500);
+                System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("If you are 18, confirm it by typing '!Iam18' in the general chat and I will add you to the 18+ channels.");
-                Thread.Sleep(500);
+                System.Threading.Thread.Sleep(500);
+                await e.User.SendMessage("(Don't lie, if it is revealed that you confirmed your age falsely, you could get banned.)");
+                System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("I can't tell you everything I can do right now, that would take up too much space! Type '!rules' to get the server rules at anytime, and '!help' to find out all the other stuff I can do.");
-                Thread.Sleep(500);
+                System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("I hope you have a fun time here!");
             };
 
