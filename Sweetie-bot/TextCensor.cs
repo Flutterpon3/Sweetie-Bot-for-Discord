@@ -188,17 +188,23 @@ namespace Sweetie_bot
 
             string alteredbadwords = CensoredWordsString;
             int cap = 3;
-            for (int i = 0; i < key.Length - 1; i += 3)
+            for (int i = 0; i < key.Length - cap; i += 3)
             {
                 string set = "";
                 int limit = key.Length - i;
-                if (limit > cap) limit = cap;
+                if (limit > cap) limit = cap + 1;
 
                 int offset = 0;
                 if (limit < cap) offset = cap - limit;
 
                 for (int j = 0; j < cap; ++j)
+                {
+                    System.Diagnostics.Debug.WriteLine(j + i - offset);
+                    System.Diagnostics.Debug.WriteLine(key.Length - 1);
                     set += key[j + i - offset];
+                    
+                }
+                   
 
                 string regularExpression = ToRegexPattern(set);
                 alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatch,

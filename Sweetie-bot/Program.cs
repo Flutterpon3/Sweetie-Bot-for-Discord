@@ -14,11 +14,18 @@ namespace Sweetie_bot
     public class ProfanityCounter
     {
         private Timer profanityTimer;
+        bool canReport;
         int count;
+
+        public bool Report
+        {
+            get { return canReport; }
+        }
 
         public ProfanityCounter()
         {
             count = 0;
+            canReport = true;
             profanityTimer = new Timer(20 * 1000);
             profanityTimer.Elapsed += sub;
             profanityTimer.AutoReset = true;
@@ -37,14 +44,22 @@ namespace Sweetie_bot
             profanityTimer.Stop();
             profanityTimer.Start();
             count++;
-            if (count > 6) count = 6;
+            if (count > 6)
+            {
+                count = 6;
+                canReport = false;
+            }
             return count;
         }
 
         private void sub(Object source, ElapsedEventArgs e)
         {
             count--;
-            if (count < 0) count = 0;
+            if (count < 0)
+            {
+                count = 0;
+                if (!canReport) canReport = true;
+            }
         }
     }
 
@@ -298,7 +313,8 @@ namespace Sweetie_bot
                             else
                             {
                                 outputMessage = censorshipManager.censor.FlutterCryFilter(e.Message.Text, filtered);
-                                await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
+                                if (userProfanityCount[e.User.Name].Report)
+                                    await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
                             }
 
                             await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
