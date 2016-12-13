@@ -171,6 +171,8 @@ namespace Sweetie_bot
 
             censorshipManager = new CensorshipManager();
             censorshipManager.Initialize();
+            //censorshipManager.ClearDuplicates();
+            //censorshipManager.WriteCleanDictionary();
 
             _client = new DiscordClient();
 

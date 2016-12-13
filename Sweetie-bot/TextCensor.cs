@@ -188,19 +188,19 @@ namespace Sweetie_bot
 
             string alteredbadwords = CensoredWordsString;
             int cap = 3;
-            for (int i = 0; i < key.Length - cap; i += 3)
+            for (int i = 0; i < key.Length - 2; i += 3)
             {
                 string set = "";
                 int limit = key.Length - i;
-                if (limit > cap) limit = cap + 1;
+                if (limit > cap) limit = cap;
 
                 int offset = 0;
                 if (limit < cap) offset = cap - limit;
 
                 for (int j = 0; j < cap; ++j)
                 {
-                    System.Diagnostics.Debug.WriteLine(j + i - offset);
-                    System.Diagnostics.Debug.WriteLine(key.Length - 1);
+                    //System.Diagnostics.Debug.WriteLine(j + i - offset);
+                    //System.Diagnostics.Debug.WriteLine(key.Length - 1);
                     set += key[j + i - offset];
                     
                 }
@@ -360,6 +360,17 @@ namespace Sweetie_bot
             return orig;
         }
 
+        public static string RemoveSpacing(string orig)
+        {
+            for (int i = orig.Length - 1; i >= 0; --i)
+            {
+                if (isSpacing(orig[i]) && orig[i] != '\0')
+                    orig = orig.Remove(i, 1);
+            }
+
+            return orig;
+        }
+
         public static string RefillNonAlphaNumeric(string orig, string nonAlphaNumerics)
         {
             for (int i = 0; i < nonAlphaNumerics.Length; ++i)
@@ -388,6 +399,24 @@ namespace Sweetie_bot
             }
 
             return orig;
+        }
+
+        public static bool isSpacing(char c)
+        {
+            if (char.IsWhiteSpace(c) || c == '_' || c == '-')
+                return true;
+            return false;
+        }
+
+        public static bool isAlphaNumericSpacing(char c)
+        {
+            if (isSpacing(c))
+                return true;
+
+            if (isAlphaNumeric(c))
+                return true;
+
+            return false;
         }
 
         public static bool isAlphaNumeric(char c)
@@ -506,6 +535,23 @@ namespace Sweetie_bot
 
 
             censor = new Censor(censoredWords, dividedDict);
+        }
+
+        public void ClearDuplicates()
+        {
+            Dictionary<string, string> CensoredWords = censor.CensoredWords;
+            Dictionary<string, string> cleared = new Dictionary<string, string>();
+            for (int i = 0; i < CensoredWords.Count; ++i)
+            {
+                //string word = Censor.RemoveSpacing(CensoredWords.ElementAt(i).Value);
+                string word = CensoredWords.ElementAt(i).Value;
+                if (!cleared.ContainsKey(word))
+                {
+                    cleared.Add(word, word);
+                }
+            }
+
+            File.WriteAllLines(@"C:\Users\Public\TestFolder\badwords.txt", cleared.Values.ToArray());
         }
 
         public void WriteProfanityVariants()
