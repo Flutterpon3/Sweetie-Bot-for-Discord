@@ -232,7 +232,7 @@ namespace Sweetie_bot
             {
                 if (text[i] == '*' && censoredText[i] == '*')
                     resultText += alteredText[i];
-                else resultText += char.IsUpper(alteredText[i]) ? alteredText[i] : censoredText[i];
+                else resultText += censoredText[i];
             }
             return resultText;
         }
@@ -250,21 +250,22 @@ namespace Sweetie_bot
 
         public string Strip(string text)
         {
-            string lText = text.ToLower();
+            string lText = text;
             string cleanDictText = lText;
             int currentDictIndex = 0;
             int wordPlace = 0;
             List<int> dictIndexes = new List<int>();
             for (int i = 0; i < cleanDictText.Length; ++i)
             {
-                bool isalpha = isAlpha(cleanDictText[i]);
+                char lower = char.ToLower(cleanDictText[i]);
+                bool isalpha = isAlpha(lower);
                 if (wordPlace < 2)
                 {
                     if (isalpha)
                     {
                         for (int j = currentDictIndex; j < Dictionary.Count; ++j)
                         {
-                            if (Dictionary[j].ElementAt(0).Value[wordPlace] == cleanDictText[i])
+                            if (Dictionary[j].ElementAt(0).Value[wordPlace] == lower)
                             {
                                 currentDictIndex = j;
                                 break;
