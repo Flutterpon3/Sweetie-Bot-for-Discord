@@ -165,6 +165,18 @@ namespace Sweetie_bot
         });
         */
 
+        /*
+        List<string> ponyRoles = new List<string>(new string[]
+        {
+            "applejack",
+            "fluttershy",
+            "pinkiepie",
+            "rainbowdash",
+            "rarity",
+            "twilight"
+        });
+        */
+
         Dictionary<string, ProfanityCounter> userProfanityCount = new Dictionary<string, ProfanityCounter>();
 
         List<string> profaneMessageResponses = new List<string>(new string[]
@@ -554,6 +566,8 @@ namespace Sweetie_bot
 
                                 int count = GetProfanityCount(e.User.Name);
                                 outputMessage = GetOutputMessage(e.User.Name, count, e.Message.Text, filtered);
+
+                                await e.Message.Delete();
                                 if (count == 6)
                                 {
                                     if (userProfanityCount[e.User.Name].Report)
