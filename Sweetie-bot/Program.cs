@@ -162,6 +162,28 @@ namespace Sweetie_bot
             "You know what... I showed that last message of yours to a certain somepony, and do you want to know what you've done?\rYou made Fluttershy cry!"
         });
 
+        int GetProfanityCount(string name)
+        {
+            int count = 0;
+            if (!userProfanityCount.ContainsKey(name))
+                userProfanityCount.Add(name, new ProfanityCounter());
+            else
+                count = userProfanityCount[name].add();
+            return count;
+        }
+
+        string GetOutputMessage(string name, int profanityCount, string message, string filtered)
+        {
+            string outputMessage;
+            if (profanityCount < 3) outputMessage = censorshipManager.censor.Underline(message, filtered);
+            else if (profanityCount < 6) outputMessage = censorshipManager.censor.BoldUnderline(message, filtered);
+            else
+            {
+                outputMessage = censorshipManager.censor.FlutterCryFilter(message, filtered);
+            }
+            return outputMessage;
+        }
+
         public void Start()
         {
             pokeTimer.Elapsed += resetpokeState;
@@ -290,11 +312,34 @@ namespace Sweetie_bot
                     });
             });
 
+            _client.MessageUpdated += async (s, e) =>
+            {
+                if (!e.After.IsAuthor)
+                {
+                    if (!nsfwChannels.Contains(e.Channel.Name))
+                    {
+                        string filtered = censorshipManager.censor.CensorMessage(e.After.Text);
+                        if (!filtered.Equals(e.After.Text))
+                        {
+                            await e.After.Delete();
+
+                            int count = GetProfanityCount(e.User.Name);
+                            string outputMessage = GetOutputMessage(e.User.Name, count, e.After.Text, filtered);
+                            if (count == 6)
+                            {
+                                if (userProfanityCount[e.User.Name].Report)
+                                    await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
+                            }
+                            await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                        }
+                    }
+                }
+            };
+
             _client.MessageReceived += async (s, e) =>
             {
                 if (!e.Message.IsAuthor)
                 {
-
                     if (!nsfwChannels.Contains(e.Channel.Name))
                     {
                         string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
@@ -302,23 +347,13 @@ namespace Sweetie_bot
                         {
                             await e.Message.Delete();
 
-                            int count = 0;
-                            if (!userProfanityCount.ContainsKey(e.User.Name))
-                                userProfanityCount.Add(e.User.Name, new ProfanityCounter());
-                            else
-                                count = userProfanityCount[e.User.Name].add();
-
-                            //string underlinedMessage = censorshipManager.censor.Underline(e.Message.Text, filtered);
-                            string outputMessage;
-                            if (count < 3) outputMessage = censorshipManager.censor.Underline(e.Message.Text, filtered);
-                            else if (count < 6) outputMessage = censorshipManager.censor.BoldUnderline(e.Message.Text, filtered);
-                            else
+                            int count = GetProfanityCount(e.User.Name);
+                            string outputMessage = GetOutputMessage(e.User.Name, count, e.Message.Text, filtered);
+                            if (count == 6)
                             {
-                                outputMessage = censorshipManager.censor.FlutterCryFilter(e.Message.Text, filtered);
                                 if (userProfanityCount[e.User.Name].Report)
                                     await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
                             }
-
                             await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
                         }
                     }
