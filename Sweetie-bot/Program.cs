@@ -153,17 +153,7 @@ namespace Sweetie_bot
             "extreme-fetish-loli-and-shota"
         });
 
-        /*
-        List<string> ponyRoles = new List<string>(new string[]
-        {
-            "applejack",
-            "fluttershy",
-            "pinkiepie",
-            "rainbowdash",
-            "rarity",
-            "twilight"
-        });
-        */
+        Dictionary<string, string> ponyRoles = new Dictionary<string, string>();
 
         /*
         List<string> ponyRoles = new List<string>(new string[]
@@ -221,6 +211,14 @@ namespace Sweetie_bot
 
         public void Start()
         {
+            ponyRoles.Add("Applejack", "Farm horse");
+            ponyRoles.Add("Fluttershy", "Animal horse");
+            ponyRoles.Add("Pinkie", "Party horse");
+            ponyRoles.Add("Rainbow", "Speed horse");
+            ponyRoles.Add("Rarity", "Gem horse");
+            ponyRoles.Add("Twilight", "Book horse");
+
+
             pokeTimer.Elapsed += resetpokeState;
             pokeTimer.AutoReset = true;
             pokeTimer.Start();
@@ -281,151 +279,38 @@ namespace Sweetie_bot
                     await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
 
-            /*
-            _client.GetService<CommandService>().CreateCommand("applejack")
+
+            _client.GetService<CommandService>().CreateCommand("PonyRole")
+                .Parameter("ChosenPony", ParameterType.Required)
+                .Description("Available ponies: Applejack, Fluttershy, Pinkie, Rainbow, Rarity, Twilight")
                 .Do(async e =>
                 {
                     if (!e.Message.Channel.IsPrivate)
                     {
-                        if (!e.User.HasRole(e.Server.FindRoles("applejack").ToArray()[0]))
+                        string chosenPony = e.GetArg("ChosenPony").ToLower();
+                        chosenPony = char.ToUpper(chosenPony[0]) + chosenPony.Substring(1, chosenPony.Length - 1);
+                        if (ponyRoles.ContainsKey(chosenPony))
                         {
-                            if (HasPonyRolePrerequisites(e))
+                            if (!e.User.HasRole(e.Server.FindRoles(chosenPony).ToArray()[0]))
                             {
-                                for (int i = 0; i < ponyRoles.Count; ++i)
+                                if (HasPonyRolePrerequisites(e))
                                 {
-                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
-                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                }
+                                    for (int i = 0; i < ponyRoles.Count; ++i)
+                                    {
+                                        Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
+                                        if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                    }
 
-                                await e.User.AddRoles(e.Server.FindRoles("applejack").ToArray());
-                                await e.Channel.SendMessage(string.Format("Farm horse approves {0}.", e.User.ToString()));
+                                    await e.User.AddRoles(e.Server.FindRoles(chosenPony).ToArray());
+                                    await e.Channel.SendMessage(string.Format("{0} approves of {1}.", ponyRoles[chosenPony], e.User.ToString()));
+                                }
+                                else await e.Channel.SendMessage("You need a role first.");
                             }
-                            else await e.Channel.SendMessage("You need a role first.");
+                            else await e.Channel.SendMessage("You already have that role, silly.");
                         }
-                        else await e.Channel.SendMessage("You already have that role, silly.");
+                        else await e.Channel.SendMessage("That pony is not available at the moment.");
                     }
                 });
-
-            _client.GetService<CommandService>().CreateCommand("fluttershy")
-                .Do(async e =>
-                {
-                    if (!e.Message.Channel.IsPrivate)
-                    {
-                        if (!e.User.HasRole(e.Server.FindRoles("fluttershy").ToArray()[0]))
-                        {
-                            if (HasPonyRolePrerequisites(e))
-                            {
-                                for (int i = 0; i < ponyRoles.Count; ++i)
-                                {
-                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
-                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                }
-
-                                await e.User.AddRoles(e.Server.FindRoles("fluttershy").ToArray());
-                                await e.Channel.SendMessage(string.Format("Animal horse approves {0}.", e.User.ToString()));
-                            }
-                            else await e.Channel.SendMessage("You need a role first.");
-                        }
-                        else await e.Channel.SendMessage("You already have that role, silly.");
-                    }
-                });
-
-            _client.GetService<CommandService>().CreateCommand("pinkiepie")
-                .Do(async e =>
-                {
-                    if (!e.Message.Channel.IsPrivate)
-                    {
-                        if (!e.User.HasRole(e.Server.FindRoles("pinkiepie").ToArray()[0]))
-                        {
-                            if (HasPonyRolePrerequisites(e))
-                            {
-                                for (int i = 0; i < ponyRoles.Count; ++i)
-                                {
-                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
-                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                }
-
-                                await e.User.AddRoles(e.Server.FindRoles("pinkiepie").ToArray());
-                                await e.Channel.SendMessage(string.Format("Party horse approves {0}.", e.User.ToString()));
-                            }
-                            else await e.Channel.SendMessage("You need a role first.");
-                        }
-                        else await e.Channel.SendMessage("You already have that role, silly.");
-                    }
-                });
-
-            _client.GetService<CommandService>().CreateCommand("rainbowdash")
-                .Do(async e =>
-                {
-                    if (!e.Message.Channel.IsPrivate)
-                    {
-                        if (!e.User.HasRole(e.Server.FindRoles("rainbowdash").ToArray()[0]))
-                        {
-                            if (HasPonyRolePrerequisites(e))
-                            {
-                                for (int i = 0; i < ponyRoles.Count; ++i)
-                                {
-                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
-                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                }
-
-                                await e.User.AddRoles(e.Server.FindRoles("rainbowdash").ToArray());
-                                await e.Channel.SendMessage(string.Format("Speed horse approves {0}.", e.User.ToString()));
-                            }
-                            else await e.Channel.SendMessage("You need a role first.");
-                        }
-                        else await e.Channel.SendMessage("You already have that role, silly.");
-                    }
-                });
-
-            _client.GetService<CommandService>().CreateCommand("rarity")
-                .Do(async e =>
-                {
-                    if (!e.Message.Channel.IsPrivate)
-                    {
-                        if (!e.User.HasRole(e.Server.FindRoles("rarity").ToArray()[0]))
-                        {
-                            if (HasPonyRolePrerequisites(e))
-                            {
-                                for (int i = 0; i < ponyRoles.Count; ++i)
-                                {
-                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
-                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                }
-
-                                await e.User.AddRoles(e.Server.FindRoles("rarity").ToArray());
-                                await e.Channel.SendMessage(string.Format("Gem horse approves {0}.", e.User.ToString()));
-                            }
-                            else await e.Channel.SendMessage("You need a role first.");
-                        }
-                        else await e.Channel.SendMessage("You already have that role, silly.");
-                    }
-                });
-
-            _client.GetService<CommandService>().CreateCommand("twilight")
-                .Do(async e =>
-                {
-                    if (!e.Message.Channel.IsPrivate)
-                    {
-                        if (!e.User.HasRole(e.Server.FindRoles("twilight").ToArray()[0]))
-                        {
-                            if (HasPonyRolePrerequisites(e))
-                            {
-                                for (int i = 0; i < ponyRoles.Count; ++i)
-                                {
-                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
-                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                }
-
-                                await e.User.AddRoles(e.Server.FindRoles("twilight").ToArray());
-                                await e.Channel.SendMessage(string.Format("Book horse approves {0}.", e.User.ToString()));
-                            }
-                            else await e.Channel.SendMessage("You need a role first.");
-                        }
-                        else await e.Channel.SendMessage("You already have that role, silly.");
-                    }
-                });
-                */
             
 
             _client.GetService<CommandService>().CreateCommand("poke")
