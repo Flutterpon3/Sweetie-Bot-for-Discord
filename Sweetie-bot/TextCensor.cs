@@ -66,8 +66,7 @@ namespace Sweetie_bot
 
             filthdrain = RemoveNonAlphaNumeric(filthdrain);
             if (filthdrain.Length == 0) return quickfilter;
-
-            string censoredMessage = Filter(quickfilter, alteredMessage, filthdrain);
+            string censoredMessage = Filter(RemoveNonAlphaNumericStar(stripped), alteredMessage, filthdrain);
             censoredMessage = RefillNonAlphaNumeric(censoredMessage, quickfilter);
             censoredMessage = Unfilter(censoredMessage, stripped, message);
 
@@ -184,7 +183,7 @@ namespace Sweetie_bot
 
         public string Filter(string text, string alteredText, string key)
         {
-            string censoredText = alteredText;
+            string censoredText = text;
 
             string alteredbadwords = CensoredWordsString;
             int cap = 3;
@@ -204,6 +203,8 @@ namespace Sweetie_bot
                     set += key[j + i - offset];
                     
                 }
+
+               
                    
 
                 string regularExpression = ToRegexPattern(set);
@@ -222,9 +223,18 @@ namespace Sweetie_bot
                     string regularExpression = ToRegexPattern(censoredWord);
                     censoredText = Regex.Replace(censoredText, regularExpression, StarCensoredMatch,
                                                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    
                 }
             }
-            return censoredText;
+
+            string resultText = "";
+            for (int i = 0; i < text.Length; ++i)
+            {
+                if (text[i] == '*' && censoredText[i] == '*')
+                    resultText += alteredText[i];
+                else resultText += censoredText[i];
+            }
+            return resultText;
         }
 
         string Unfilter(string censored, string unfilter, string original)
@@ -240,20 +250,22 @@ namespace Sweetie_bot
 
         public string Strip(string text)
         {
-            string lText = text.ToLower();
+            string lText = text;
             string cleanDictText = lText;
             int currentDictIndex = 0;
             int wordPlace = 0;
             List<int> dictIndexes = new List<int>();
             for (int i = 0; i < cleanDictText.Length; ++i)
             {
+                char lower = char.ToLower(cleanDictText[i]);
+                bool isalpha = isAlpha(lower);
                 if (wordPlace < 2)
                 {
-                    if (isAlpha(cleanDictText[i]))
+                    if (isalpha)
                     {
                         for (int j = currentDictIndex; j < Dictionary.Count; ++j)
                         {
-                            if (Dictionary[j].ElementAt(0).Value[wordPlace] == cleanDictText[i])
+                            if (Dictionary[j].ElementAt(0).Value[wordPlace] == lower)
                             {
                                 currentDictIndex = j;
                                 break;
@@ -266,7 +278,7 @@ namespace Sweetie_bot
                     }
                 }
 
-                if (wordPlace == 2 || !isAlpha(cleanDictText[i]))
+                if (wordPlace == 2 || !isalpha)
                 {
                     if (currentDictIndex != -1)
                     {
@@ -360,6 +372,18 @@ namespace Sweetie_bot
             return orig;
         }
 
+        public static string RemoveNonAlphaNumericStar(string orig)
+        {
+            for (int i = orig.Length - 1; i >= 0; --i)
+            {
+                if (!isAlphaNumericStar(orig[i]) && orig[i] != '\0')
+                    orig = orig.Remove(i, 1);
+            }
+
+            return orig;
+        }
+
+
         public static string RemoveSpacing(string orig)
         {
             for (int i = orig.Length - 1; i >= 0; --i)
@@ -416,6 +440,16 @@ namespace Sweetie_bot
             if (isAlphaNumeric(c))
                 return true;
 
+            return false;
+        }
+
+        public static bool isAlphaNumericStar(char c)
+        {
+            if (c == '*')
+                return true;
+
+            if (isAlphaNumeric(c))
+                return true;
             return false;
         }
 

@@ -7002,6 +7002,7 @@ ballpoint
 ballpoints
 ballroom
 ballrooms
+balls
 ballute
 ballutes
 bally
@@ -9942,6 +9943,7 @@ bloodthirstily
 bloodthirstiness
 bloodthirsty
 bloodworm
+bloody
 bloodying
 bloom
 bloomed
@@ -12677,6 +12679,7 @@ butleries
 butlers
 butlery
 buts
+butt
 butte
 butted
 butter
@@ -21606,7 +21609,11 @@ cranky
 crannied
 crannies
 cranny
+crap
 crape
+craped
+crapes
+craping
 crapped
 crapper
 crappers
@@ -21617,6 +21624,7 @@ crappiest
 crappiness
 crapping
 crappy
+craps
 crapshooter
 crapshooters
 crapulence
@@ -23238,6 +23246,7 @@ dammed
 dammer
 dammers
 damming
+damn
 damnabilities
 damnability
 damnable
@@ -23245,11 +23254,17 @@ damnableness
 damnably
 damnation
 damndest
+damned
+damneder
 damnedest
+damner
+damners
 damnification
 damnify
 damnifying
+damning
 damnit
+damns
 damocles
 damosel
 damosels
@@ -34710,6 +34725,8 @@ farseeing
 farsighted
 farsightedly
 farsightedness
+fart
+farted
 farther
 farthermost
 farthest
@@ -44018,6 +44035,7 @@ hellcat
 hellcats
 hellebore
 hellebores
+helled
 hellene
 hellenes
 hellenic
@@ -44025,6 +44043,7 @@ hellenism
 hellenist
 hellenistic
 hellenists
+heller
 hellfire
 hellfires
 hellgrammite
@@ -44041,6 +44060,7 @@ helloed
 helloes
 helloing
 hellos
+hells
 helluva
 helm
 helmed
@@ -52602,6 +52622,7 @@ knobbier
 knobbiest
 knobbiness
 knobby
+knobs
 knock
 knockdown
 knockdowns
@@ -63136,6 +63157,7 @@ nj
 nm
 no
 noah
+nob
 nobbier
 nobbily
 nobble
@@ -68725,6 +68747,7 @@ pawing
 pawky
 pawl
 pawls
+pawn
 pawnable
 pawnbroker
 pawnbrokers
@@ -70966,8 +70989,12 @@ pishes
 pishing
 pismire
 pismires
+piss
 pissant
 pissants
+pissed
+pisses
+pissing
 pissoir
 pissoirs
 pistache
@@ -72199,6 +72226,9 @@ pooling
 poolroom
 poolrooms
 pools
+poop
+pooped
+poops
 poopsie
 poor
 poorer
@@ -72291,6 +72321,7 @@ porkpie
 porkpies
 porks
 porky
+porn
 pornographer
 pornographic
 pornographically
@@ -74521,6 +74552,7 @@ promulgators
 promulged
 promulges
 promulging
+pron
 pronate
 pronating
 pronation
@@ -78305,6 +78337,7 @@ rectories
 rectors
 rectory
 rectos
+rectum
 recumbencies
 recumbent
 recuperate
@@ -84858,6 +84891,7 @@ screenplays
 screens
 screenwriter
 screes
+screw
 screwball
 screwballs
 screwdriver

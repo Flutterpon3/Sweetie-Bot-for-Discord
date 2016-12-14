@@ -72,6 +72,8 @@ namespace Sweetie_bot
 
         static int pokeState = 0;
 
+        static bool filterEnabled = true;
+
         private void resetpokeState(Object source, ElapsedEventArgs e)
         {
             pokeState = 0;
@@ -91,7 +93,7 @@ namespace Sweetie_bot
             "goes to {0}, nuzzling their leg.",
             "smiles happily.",
             "giggles to herself.",
-            "falls asleep on {0}"
+            "falls asleep on {0}."
         };
 
         List<string> meResponsesLewd = new List<string>()
@@ -136,7 +138,7 @@ namespace Sweetie_bot
 
         List<string> nsfwChannels = new List<string>(new string[] {
             "general-nsfw",
-            "non-mlp-nsfw",
+            "non-mlp-young",
             "filly-only",
             "filly-x-colt",
             "colt-x-only",
@@ -146,8 +148,22 @@ namespace Sweetie_bot
             "colt-x-female",
             "mlp-loli",
             "mlp-shota",
-            "mlp-loli-x-shota"
+            "mlp-loli-x-shota",
+            "extreme-fetish-general",
+            "extreme-fetish-loli-and-shota"
         });
+
+        /*
+        List<string> ponyRoles = new List<string>(new string[]
+        {
+            "applejack",
+            "fluttershy",
+            "pinkiepie",
+            "rainbowdash",
+            "rarity",
+            "twilight"
+        });
+        */
 
         Dictionary<string, ProfanityCounter> userProfanityCount = new Dictionary<string, ProfanityCounter>();
 
@@ -161,6 +177,35 @@ namespace Sweetie_bot
             ".....",
             "You know what... I showed that last message of yours to a certain somepony, and do you want to know what you've done?\rYou made Fluttershy cry!"
         });
+
+        int GetProfanityCount(string name)
+        {
+            int count = 0;
+            if (!userProfanityCount.ContainsKey(name))
+                userProfanityCount.Add(name, new ProfanityCounter());
+            else
+                count = userProfanityCount[name].add();
+            return count;
+        }
+
+        string GetOutputMessage(string name, int profanityCount, string message, string filtered)
+        {
+            string outputMessage;
+            if (profanityCount < 3) outputMessage = censorshipManager.censor.Underline(message, filtered);
+            else if (profanityCount < 6) outputMessage = censorshipManager.censor.BoldUnderline(message, filtered);
+            else
+            {
+                outputMessage = censorshipManager.censor.FlutterCryFilter(message, filtered);
+            }
+            return outputMessage;
+        }
+
+        bool HasPonyRolePrerequisites(CommandEventArgs e)
+        {
+            return e.User.HasRole(e.Server.FindRoles("@everypone").ToArray()[0]) ||
+                   e.User.HasRole(e.Server.FindRoles("Filly Scout").ToArray()[0]) ||
+                   e.User.HasRole(e.Server.FindRoles("Filly Guide").ToArray()[0]);
+        }
 
         public void Start()
         {
@@ -181,6 +226,33 @@ namespace Sweetie_bot
                 x.HelpMode = HelpMode.Private;
             });
 
+            _client.GetService<CommandService>().CreateCommand("EnableFilter")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (e.User.HasRole(e.Server.FindRoles("Club Room Manager").ToArray()[0]) ||
+                            e.User.HasRole(e.Server.FindRoles("Sweetie-Bot-Technician").ToArray()[0]))
+                        {
+                            filterEnabled = true;
+                            await e.Channel.SendMessage("Profanity filter enabled");
+                        }
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("DisableFilter")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (e.User.HasRole(e.Server.FindRoles("Club Room Manager").ToArray()[0]) ||
+                            e.User.HasRole(e.Server.FindRoles("Sweetie-Bot-Technician").ToArray()[0]))
+                        {
+                            filterEnabled = false;
+                            await e.Channel.SendMessage("Profanity filter disabled");
+                        }
+                    }
+                });
 
 
 #if DEBUG
@@ -196,6 +268,153 @@ namespace Sweetie_bot
                 {
                     await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
+
+            /*
+            _client.GetService<CommandService>().CreateCommand("applejack")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (!e.User.HasRole(e.Server.FindRoles("applejack").ToArray()[0]))
+                        {
+                            if (HasPonyRolePrerequisites(e))
+                            {
+                                for (int i = 0; i < ponyRoles.Count; ++i)
+                                {
+                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
+                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                }
+
+                                await e.User.AddRoles(e.Server.FindRoles("applejack").ToArray());
+                                await e.Channel.SendMessage(string.Format("Farm horse approves {0}.", e.User.ToString()));
+                            }
+                            else await e.Channel.SendMessage("You need a role first.");
+                        }
+                        else await e.Channel.SendMessage("You already have that role, silly.");
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("fluttershy")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (!e.User.HasRole(e.Server.FindRoles("fluttershy").ToArray()[0]))
+                        {
+                            if (HasPonyRolePrerequisites(e))
+                            {
+                                for (int i = 0; i < ponyRoles.Count; ++i)
+                                {
+                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
+                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                }
+
+                                await e.User.AddRoles(e.Server.FindRoles("fluttershy").ToArray());
+                                await e.Channel.SendMessage(string.Format("Animal horse approves {0}.", e.User.ToString()));
+                            }
+                            else await e.Channel.SendMessage("You need a role first.");
+                        }
+                        else await e.Channel.SendMessage("You already have that role, silly.");
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("pinkiepie")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (!e.User.HasRole(e.Server.FindRoles("pinkiepie").ToArray()[0]))
+                        {
+                            if (HasPonyRolePrerequisites(e))
+                            {
+                                for (int i = 0; i < ponyRoles.Count; ++i)
+                                {
+                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
+                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                }
+
+                                await e.User.AddRoles(e.Server.FindRoles("pinkiepie").ToArray());
+                                await e.Channel.SendMessage(string.Format("Party horse approves {0}.", e.User.ToString()));
+                            }
+                            else await e.Channel.SendMessage("You need a role first.");
+                        }
+                        else await e.Channel.SendMessage("You already have that role, silly.");
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("rainbowdash")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (!e.User.HasRole(e.Server.FindRoles("rainbowdash").ToArray()[0]))
+                        {
+                            if (HasPonyRolePrerequisites(e))
+                            {
+                                for (int i = 0; i < ponyRoles.Count; ++i)
+                                {
+                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
+                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                }
+
+                                await e.User.AddRoles(e.Server.FindRoles("rainbowdash").ToArray());
+                                await e.Channel.SendMessage(string.Format("Speed horse approves {0}.", e.User.ToString()));
+                            }
+                            else await e.Channel.SendMessage("You need a role first.");
+                        }
+                        else await e.Channel.SendMessage("You already have that role, silly.");
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("rarity")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (!e.User.HasRole(e.Server.FindRoles("rarity").ToArray()[0]))
+                        {
+                            if (HasPonyRolePrerequisites(e))
+                            {
+                                for (int i = 0; i < ponyRoles.Count; ++i)
+                                {
+                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
+                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                }
+
+                                await e.User.AddRoles(e.Server.FindRoles("rarity").ToArray());
+                                await e.Channel.SendMessage(string.Format("Gem horse approves {0}.", e.User.ToString()));
+                            }
+                            else await e.Channel.SendMessage("You need a role first.");
+                        }
+                        else await e.Channel.SendMessage("You already have that role, silly.");
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("twilight")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (!e.User.HasRole(e.Server.FindRoles("twilight").ToArray()[0]))
+                        {
+                            if (HasPonyRolePrerequisites(e))
+                            {
+                                for (int i = 0; i < ponyRoles.Count; ++i)
+                                {
+                                    Role[] ponyrole = e.Server.FindRoles(ponyRoles[i]).ToArray();
+                                    if (e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                }
+
+                                await e.User.AddRoles(e.Server.FindRoles("twilight").ToArray());
+                                await e.Channel.SendMessage(string.Format("Book horse approves {0}.", e.User.ToString()));
+                            }
+                            else await e.Channel.SendMessage("You need a role first.");
+                        }
+                        else await e.Channel.SendMessage("You already have that role, silly.");
+                    }
+                });
+                */
+            
 
             _client.GetService<CommandService>().CreateCommand("poke")
                 .Description("Does... Somthing. <:raritywink:250101117055139840>")
@@ -290,38 +509,61 @@ namespace Sweetie_bot
                     });
             });
 
+            _client.MessageUpdated += async (s, e) =>
+            {
+                if (!e.After.IsAuthor)
+                {
+                    if (filterEnabled)
+                    {
+                        if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
+                        {
+                            string filtered = censorshipManager.censor.CensorMessage(e.After.Text);
+                            if (!filtered.Equals(e.After.Text))
+                            {
+                                await e.After.Delete();
+
+                                int count = GetProfanityCount(e.User.Name);
+                                string outputMessage = GetOutputMessage(e.User.Name, count, e.After.Text, filtered);
+                                if (count == 6)
+                                {
+                                    if (userProfanityCount[e.User.Name].Report)
+                                        await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
+                                }
+                                await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                            }
+                        }
+                    }
+                }
+            };
+
             _client.MessageReceived += async (s, e) =>
             {
                 if (!e.Message.IsAuthor)
                 {
-
-                    if (!nsfwChannels.Contains(e.Channel.Name))
+                    if (filterEnabled)
                     {
-                        string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
-                        if (!filtered.Equals(e.Message.Text))
+                        if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
-                            await e.Message.Delete();
-
-                            int count = 0;
-                            if (!userProfanityCount.ContainsKey(e.User.Name))
-                                userProfanityCount.Add(e.User.Name, new ProfanityCounter());
-                            else
-                                count = userProfanityCount[e.User.Name].add();
-
-                            //string underlinedMessage = censorshipManager.censor.Underline(e.Message.Text, filtered);
-                            string outputMessage;
-                            if (count < 3) outputMessage = censorshipManager.censor.Underline(e.Message.Text, filtered);
-                            else if (count < 6) outputMessage = censorshipManager.censor.BoldUnderline(e.Message.Text, filtered);
-                            else
+                            string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
+                            if (!filtered.Equals(e.Message.Text))
                             {
-                                outputMessage = censorshipManager.censor.FlutterCryFilter(e.Message.Text, filtered);
+                                string outputMessage = censorshipManager.censor.FlutterCryFilter(e.Message.Text, filtered);
                                 if (userProfanityCount[e.User.Name].Report)
-                                    await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
-                            }
+                                    await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562>");
+                                await e.Message.Delete();
 
-                            await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                                int count = GetProfanityCount(e.User.Name);
+                                outputMessage = GetOutputMessage(e.User.Name, count, e.Message.Text, filtered);
+                                if (count == 6)
+                                {
+                                    if (userProfanityCount[e.User.Name].Report)
+                                        await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! :fluttercry:");
+                                }
+                                await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                            }
                         }
                     }
+                    
 
 
                     if (e.Message.RawText.StartsWith("hey sweetie, ", StringComparison.OrdinalIgnoreCase) |
@@ -394,7 +636,6 @@ namespace Sweetie_bot
                     }
                     catch (FileNotFoundException)
                     {
-
                         throw;
                     }
 
