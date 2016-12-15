@@ -66,8 +66,6 @@ namespace Sweetie_bot
 
             filthdrain = RemoveNonAlphaNumeric(filthdrain);
             if (filthdrain.Length == 0) return quickfilter;
-            System.Diagnostics.Debug.WriteLine(stripped.Length);
-            System.Diagnostics.Debug.WriteLine(alteredMessage.Length);
             string censoredMessage = Filter(RemoveNonAlphaNumericStar(stripped), alteredMessage, filthdrain);
             censoredMessage = RefillNonAlphaNumeric(censoredMessage, quickfilter);
             censoredMessage = Unfilter(censoredMessage, stripped, message);
@@ -185,8 +183,8 @@ namespace Sweetie_bot
 
         public string Filter(string text, string alteredText, string key)
         {
-            //string censoredText = text;
-            string censoredText = alteredText;
+            string censoredText = text;
+            //string censoredText = alteredText;
 
             string alteredbadwords = CensoredWordsString;
             int cap = 3;
@@ -201,14 +199,8 @@ namespace Sweetie_bot
 
                 for (int j = 0; j < cap; ++j)
                 {
-                    //System.Diagnostics.Debug.WriteLine(j + i - offset);
-                    //System.Diagnostics.Debug.WriteLine(key.Length - 1);
                     set += key[j + i - offset];
-                    
                 }
-
-               
-                   
 
                 string regularExpression = ToRegexPattern(set);
                 alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatch,
@@ -230,12 +222,6 @@ namespace Sweetie_bot
                 }
             }
 
-            /*
-            System.Diagnostics.Debug.WriteLine(key);
-            System.Diagnostics.Debug.WriteLine(text);
-            System.Diagnostics.Debug.WriteLine(alteredText);
-            System.Diagnostics.Debug.WriteLine(censoredText);
-
             string resultText = "";
             for (int i = 0; i < alteredText.Length; ++i)
             {
@@ -244,12 +230,9 @@ namespace Sweetie_bot
                 else resultText += censoredText[i];
             }
 
-            System.Diagnostics.Debug.WriteLine(resultText);
-
             return resultText;
-            */
 
-            return censoredText;
+            //return censoredText;
         }
 
         string Unfilter(string censored, string unfilter, string original)
@@ -309,14 +292,14 @@ namespace Sweetie_bot
                 string[] words3 = lText.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
                 foreach (string word in words3)
                 {
-                    string readword = word;
-                    bool contains = Dictionary[dictIndexes[i]].ContainsKey(readword);
+                    //string readword = word;
+                    //bool contains = Dictionary[dictIndexes[i]].ContainsKey(readword);
 
-                    if (!contains)
-                    {
-                        readword = RemoveNonAlphaNumeric(word);
-                        contains = Dictionary[dictIndexes[i]].ContainsKey(readword);
-                    }
+                    //if (!contains)
+                    //{
+                    string readword = RemoveNonAlphaNumeric(word);
+                    bool contains = Dictionary[dictIndexes[i]].ContainsKey(readword);
+                    //}
                     if (contains)
                     {
                         string regularExpression = ToRegexPattern(readword);
@@ -530,7 +513,6 @@ namespace Sweetie_bot
         // Use this for initialization
         public void Initialize()
         {
-            System.Diagnostics.Debug.WriteLine(AppDomain.CurrentDomain.BaseDirectory + "badwords.txt");
             StreamReader badwords = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "badwords.txt");
             string str = badwords.ReadToEnd().ToLower();
             str = str.Replace(((char)13).ToString(), "");
