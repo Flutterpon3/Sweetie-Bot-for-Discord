@@ -60,7 +60,7 @@ namespace Sweetie_bot
             string stripped = "";
             for (int i = 0; i < filthdrain.Length; ++i)
             {
-                if (quickfilter[i] == '*') stripped += message[i];
+                if (quickfilter[i] == '¢') stripped += message[i];
                 else stripped += filthdrain[i];
             }
 
@@ -215,7 +215,7 @@ namespace Sweetie_bot
 
             for (int i = 0; i < CensoredWords.Count; ++i)
             {
-                if (limitedBadWords[i].Contains('*'))
+                if (limitedBadWords[i].Contains('¢'))
                 {
                     string censoredWord = CensoredWords.Keys.ElementAt(i);
                     if (!(censoredText.IndexOf(censoredWord, StringComparison.OrdinalIgnoreCase) >= 0)) continue;
@@ -228,12 +228,15 @@ namespace Sweetie_bot
             }
 
             string resultText = "";
-            for (int i = 0; i < text.Length; ++i)
+            for (int i = 0; i < alteredText.Length; ++i)
             {
-                if (text[i] == '*' && censoredText[i] == '*')
+                if (text[i] == '¢' && censoredText[i] == '¢')
                     resultText += alteredText[i];
                 else resultText += censoredText[i];
             }
+
+           
+
             return resultText;
         }
 
@@ -242,7 +245,7 @@ namespace Sweetie_bot
             string unfiltered = "";
             for (int i = 0; i < original.Length; ++i)
             {
-                if (unfilter[i] == '*') unfiltered += original[i];
+                if (unfilter[i] == '¢') unfiltered += original[i];
                 else unfiltered += censored[i];
             }
             return unfiltered;
@@ -318,7 +321,7 @@ namespace Sweetie_bot
         private static string StarCensoredMatch(Match m)
         {
             string word = m.Captures[0].Value;
-            return new string('*', word.Length);
+            return new string('¢', word.Length);
         }
 
         private static string EmoteFilter(Match m)
@@ -395,6 +398,24 @@ namespace Sweetie_bot
             return orig;
         }
 
+        public static string RefillNonAlphaNumericStar(string orig, string nonAlphaNumericStars)
+        {
+            for (int i = 0; i < nonAlphaNumericStars.Length; ++i)
+            {
+                if (!isAlphaNumericStar(nonAlphaNumericStars[i]))
+                {
+                    string part1 = orig.Substring(0, i);
+                    string part2 = orig.Substring(i, orig.Length - i);
+
+                    char refill = nonAlphaNumericStars[i];
+
+                    orig = part1 + refill + part2;
+                }
+            }
+
+            return orig;
+        }
+
         public static string RefillNonAlphaNumeric(string orig, string nonAlphaNumerics)
         {
             for (int i = 0; i < nonAlphaNumerics.Length; ++i)
@@ -415,7 +436,7 @@ namespace Sweetie_bot
                         condition2 = !isAlphaNumeric(part2[0]);
                     
                     if (condition1 && condition2)
-                        refill = '*';
+                        refill = '¢';
                     */
 
                     orig = part1 + refill + part2;
@@ -445,7 +466,7 @@ namespace Sweetie_bot
 
         public static bool isAlphaNumericStar(char c)
         {
-            if (c == '*')
+            if (c == '¢')
                 return true;
 
             if (isAlphaNumeric(c))
