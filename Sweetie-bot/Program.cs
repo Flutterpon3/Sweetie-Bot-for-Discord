@@ -192,9 +192,12 @@ namespace Sweetie_bot
 
         bool HasPonyRolePrerequisites(CommandEventArgs e)
         {
-            return e.User.HasRole(e.Server.FindRoles("@everypone").ToArray()[0]) ||
-                   e.User.HasRole(e.Server.FindRoles("Filly Scout").ToArray()[0]) ||
-                   e.User.HasRole(e.Server.FindRoles("Filly Guide").ToArray()[0]);
+            Role[] everypone = e.Server.FindRoles("@everypone").ToArray();
+            Role[] fillyscout = e.Server.FindRoles("Filly Scout").ToArray();
+            Role[] fillyguide = e.Server.FindRoles("Filly Guide").ToArray();
+            return (everypone.Length > 0  && e.User.HasRole(everypone[0])) ||
+                   (fillyscout.Length > 0 && e.User.HasRole(fillyscout[0])) ||
+                   (fillyguide.Length > 0 && e.User.HasRole(fillyguide[0]));
         }
 
         public void Start()
@@ -292,26 +295,27 @@ namespace Sweetie_bot
                         chosenPony = char.ToUpper(chosenPony[0]) + chosenPony.Substring(1, chosenPony.Length - 1);
                         if (ponyRoles.ContainsKey(chosenPony))
                         {
-                            if (!e.User.HasRole(e.Server.FindRoles(chosenPony).ToArray()[0]))
+                            Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
+                            if (assignedRole.Length > 0)
                             {
-                                if (HasPonyRolePrerequisites(e))
+                                if (!e.User.HasRole(assignedRole[0]))
                                 {
-                                    for (int i = 0; i < ponyRoles.Count; ++i)
+                                    if (HasPonyRolePrerequisites(e))
                                     {
-                                        Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
-                                        if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                    }
-
-                                    Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
-                                    if (assignedRole.Length > 0)
-                                    {
-                                        await e.User.AddRoles();
+                                        for (int i = 0; i < ponyRoles.Count; ++i)
+                                        {
+                                            Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
+                                            if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                        }
+                                        
+                                        await e.User.AddRoles(assignedRole);
                                         await e.Channel.SendMessage(string.Format("{0} approves of {1}.", ponyRoles[chosenPony], e.User.ToString()));
                                     }
+                                    else await e.Channel.SendMessage("You need a role first.");
                                 }
-                                else await e.Channel.SendMessage("You need a role first.");
+                                else await e.Channel.SendMessage("You already have that role, silly.");
                             }
-                            else await e.Channel.SendMessage("You already have that role, silly.");
+                            else await e.Channel.SendMessage("That pony is not available at the moment.");
                         }
                         else await e.Channel.SendMessage("That pony is not available at the moment.");
                     }
