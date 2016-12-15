@@ -202,6 +202,7 @@ namespace Sweetie_bot
 
         public void Start()
         {
+            ponyRoles.Add("None", "You");
             ponyRoles.Add("Applejack", "Farm horse");
             ponyRoles.Add("Fluttershy", "Animal horse");
             ponyRoles.Add("Pinkie", "Party horse");
@@ -209,7 +210,7 @@ namespace Sweetie_bot
             ponyRoles.Add("Rarity", "Gem horse");
             ponyRoles.Add("Twilight", "Book horse");
             ponyRoles.Add("Bigmac", "Yoke horse");
-            ponyRoles.Add("Lyra", "Harp horse");
+            ponyRoles.Add("Lyra", "Hands");
 
 
             pokeTimer.Elapsed += resetpokeState;
@@ -286,7 +287,7 @@ namespace Sweetie_bot
 
             _client.GetService<CommandService>().CreateCommand("PonyRole")
                 .Parameter("ChosenPony", ParameterType.Required)
-                .Description("Available ponies: Applejack, Fluttershy, Pinkie, Rainbow, Rarity, Twilight")
+                .Description("Available ponies: None, Applejack, Fluttershy, Pinkie, Rainbow, Rarity, Twilight")
                 .Do(async e =>
                 {
                     if (!e.Message.Channel.IsPrivate)
@@ -296,9 +297,9 @@ namespace Sweetie_bot
                         if (ponyRoles.ContainsKey(chosenPony))
                         {
                             Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
-                            if (assignedRole.Length > 0)
+                            if (chosenPony.Equals("None") || assignedRole.Length > 0)
                             {
-                                if (!e.User.HasRole(assignedRole[0]))
+                                if (chosenPony.Equals("None") || !e.User.HasRole(assignedRole[0]))
                                 {
                                     if (HasPonyRolePrerequisites(e))
                                     {
@@ -307,9 +308,11 @@ namespace Sweetie_bot
                                             Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
                                             if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
                                         }
+
+                                        if (!chosenPony.Equals("None"))
+                                            await e.User.AddRoles(assignedRole);
+                                        await e.Channel.SendMessage(string.Format("{0} approves of {1}.", e.User.ToString(), e.User.ToString()));
                                         
-                                        await e.User.AddRoles(assignedRole);
-                                        await e.Channel.SendMessage(string.Format("{0} approves of {1}.", ponyRoles[chosenPony], e.User.ToString()));
                                     }
                                     else await e.Channel.SendMessage("You need a role first.");
                                 }
