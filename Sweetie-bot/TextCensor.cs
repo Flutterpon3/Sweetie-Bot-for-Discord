@@ -248,7 +248,7 @@ namespace Sweetie_bot
 
         public string Strip(string text)
         {
-            string lText = text;
+            string lText = text.ToLower();
             string cleanDictText = lText;
             int currentDictIndex = 0;
             int wordPlace = 0;
