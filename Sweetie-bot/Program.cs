@@ -9,6 +9,7 @@ namespace Sweetie_bot
     using Discord;
     using Discord.Commands;
     using System.IO;
+    using System.Threading.Tasks;
     using System.Timers;
 
     public class ProfanityCounter
@@ -65,7 +66,6 @@ namespace Sweetie_bot
 
     class Program
     {
-
         const string BOT_TOKEN_FILE = "./discord_token.txt";
 
         static void Main(string[] args) => new Program().Start();
@@ -150,8 +150,10 @@ namespace Sweetie_bot
             "mlp-shota",
             "mlp-loli-x-shota",
             "extreme-fetish-general",
-            "extreme-fetish-loli-and-shota"
+            "extreme-fetish-loli-n-shota"
         });
+
+        private static char PonyRolePrefix = '^';
 
         Dictionary<string, string> ponyRoles = new Dictionary<string, string>();
         
@@ -200,19 +202,27 @@ namespace Sweetie_bot
                    (fillyguide.Length > 0 && e.User.HasRole(fillyguide[0]));
         }
 
+        private void PonyRolesUpdate(Server server)
+        {
+            ponyRoles.Clear();
+            ponyRoles.Add("None", "You");
+            Role[] serverRoles = server.Roles.ToArray();
+            for (int i = 0; i < server.RoleCount; ++i)
+            {
+                string serverName = serverRoles[i].Name;
+                if (serverName.StartsWith("" + PonyRolePrefix))
+                {
+                    if (!ponyRoles.ContainsKey(serverName))
+                    {
+                        string ponyName = serverName.Split(PonyRolePrefix)[1];
+                        ponyRoles.Add(serverRoles[i].Name, ponyName);
+                    }
+                }
+            }
+        }
+
         public void Start()
         {
-            ponyRoles.Add("None", "You");
-            ponyRoles.Add("Applejack", "Farm horse");
-            ponyRoles.Add("Fluttershy", "Animal horse");
-            ponyRoles.Add("Pinkie", "Party horse");
-            ponyRoles.Add("Rainbow", "Speed horse");
-            ponyRoles.Add("Rarity", "Gem horse");
-            ponyRoles.Add("Twilight", "Book horse");
-            ponyRoles.Add("Bigmac", "Yoke horse");
-            ponyRoles.Add("Lyra", "Hands");
-
-
             pokeTimer.Elapsed += resetpokeState;
             pokeTimer.AutoReset = true;
             pokeTimer.Start();
@@ -283,42 +293,53 @@ namespace Sweetie_bot
                 {
                     await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
-
-
+            
             _client.GetService<CommandService>().CreateCommand("PonyRole")
                 .Parameter("ChosenPony", ParameterType.Required)
-                .Description("Available ponies: None, Applejack, Fluttershy, Pinkie, Rainbow, Rarity, Twilight")
+                .Parameter("Message", ParameterType.Unparsed)
+                .Description("Available ponies: None, Applejack, Fluttershy, Pinkie, Rainbow, Rarity, Twilight, Bigmac, Lyra")
                 .Do(async e =>
                 {
                     if (!e.Message.Channel.IsPrivate)
                     {
+                        PonyRolesUpdate(e.Server);
+
                         string chosenPony = e.GetArg("ChosenPony").ToLower();
-                        chosenPony = char.ToUpper(chosenPony[0]) + chosenPony.Substring(1, chosenPony.Length - 1);
+                        string message = e.GetArg("Message");
+                        System.Diagnostics.Debug.WriteLine(message);
+                        chosenPony = PonyRolePrefix + char.ToUpper(chosenPony[0]) + chosenPony.Substring(1, chosenPony.Length - 1);
                         if (ponyRoles.ContainsKey(chosenPony))
                         {
                             Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
-                            if (chosenPony.Equals("None") || assignedRole.Length > 0)
+                            if (chosenPony.Equals(PonyRolePrefix + "None") || assignedRole.Length > 0)
                             {
-                                if (chosenPony.Equals("None") || !e.User.HasRole(assignedRole[0]))
+                                if (chosenPony.Equals(PonyRolePrefix + "None") || !e.User.HasRole(assignedRole[0]))
                                 {
                                     if (HasPonyRolePrerequisites(e))
                                     {
-                                        for (int i = 0; i < ponyRoles.Count; ++i)
+                                        for (int i = 1; i < ponyRoles.Count; ++i)
                                         {
                                             Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
                                             if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
                                         }
 
-                                        if (!chosenPony.Equals("None"))
+                                        string ponyString = "";
+
+                                        if (!chosenPony.Equals(PonyRolePrefix + "None"))
+                                        {
+                                            ponyString = ponyRoles[chosenPony];
                                             await e.User.AddRoles(assignedRole);
-                                        await e.Channel.SendMessage(string.Format("{0} approves of {1}.", e.User.ToString(), e.User.ToString()));
+                                        }
+                                        else ponyString = e.User.ToString();
+
+                                        await e.Channel.SendMessage(string.Format("{0} approves of {1}.", ponyString, e.User.ToString()));
                                         
                                     }
                                     else await e.Channel.SendMessage("You need a role first.");
                                 }
                                 else await e.Channel.SendMessage("You already have that role, silly.");
                             }
-                            else await e.Channel.SendMessage("That pony is not available at the moment.");
+                            else await e.Channel.SendMessage("That pony has not been added to the discord group yet.");
                         }
                         else await e.Channel.SendMessage("That pony is not available at the moment.");
                     }
