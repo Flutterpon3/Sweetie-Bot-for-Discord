@@ -343,34 +343,31 @@ namespace Sweetie_bot
                             Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
                             if (chosenPony.Equals(PonyRolePrefix + "None") || assignedRole.Length > 0)
                             {
-                                if (chosenPony.Equals(PonyRolePrefix + "None") || !e.User.HasRole(assignedRole[0]))
+                                if (HasPonyRolePrerequisites(e))
                                 {
-                                    if (HasPonyRolePrerequisites(e))
+                                    string message = e.GetArg("Message");
+                                    if (message.Length > 0 && message.StartsWith("msg ", StringComparison.OrdinalIgnoreCase) && HasManagerialRolePrerequisites(e))
                                     {
-                                        string message = e.GetArg("Message");
-                                        if (message.Length > 0 && message.StartsWith("msg ", StringComparison.OrdinalIgnoreCase) && HasManagerialRolePrerequisites(e))
-                                        {
-                                            string ponymessage = message.Split(new string[] { "msg "}, StringSplitOptions.None)[1];
-                                            ponyRoles[chosenPony] = ponymessage;
-                                            await e.User.SendMessage(chosenPony.Split(PonyRolePrefix)[1] + " now says " + ponymessage + " the user.");
-                                        }
-                                        else
-                                        {
-                                            for (int i = 1; i < ponyRoles.Count; ++i)
-                                            {
-                                                Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
-                                                if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
-                                            }
-
-                                            string ponyString = ponyRoles[chosenPony];
-                                            if (!chosenPony.Equals(PonyRolePrefix + "None"))
-                                                await e.User.AddRoles(assignedRole);
-                                            await e.Channel.SendMessage(string.Format("{0} {1}.", ponyString, e.User.ToString()));
-                                        }
+                                        string ponymessage = message.Split(new string[] { "msg "}, StringSplitOptions.None)[1];
+                                        ponyRoles[chosenPony] = ponymessage;
+                                        await e.User.SendMessage(chosenPony.Split(PonyRolePrefix)[1] + " now says " + ponymessage + " the user.");
                                     }
-                                    else await e.Channel.SendMessage("You need a role first.");
+                                    else if (chosenPony.Equals(PonyRolePrefix + "None") || !e.User.HasRole(assignedRole[0]))
+                                    {
+                                        for (int i = 0; i < ponyRoles.Count; ++i)
+                                        {
+                                            Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
+                                            if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                        }
+
+                                        string ponyString = ponyRoles[chosenPony];
+                                        if (!chosenPony.Equals(PonyRolePrefix + "None"))
+                                            await e.User.AddRoles(assignedRole);
+                                        await e.Channel.SendMessage(string.Format("{0} {1}.", ponyString, e.User.ToString()));
+                                    }
+                                    else await e.Channel.SendMessage("You already have that role, silly.");
                                 }
-                                else await e.Channel.SendMessage("You already have that role, silly.");
+                                else await e.Channel.SendMessage("You need a role first.");
                             }
                             else await e.Channel.SendMessage("That pony has not been added to the discord group yet.");
                         }
