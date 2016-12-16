@@ -336,8 +336,6 @@ namespace Sweetie_bot
 
                         string chosenPony = e.GetArg("ChosenPony").ToLower();
                         chosenPony = ("" + PonyRolePrefix) + char.ToUpper(chosenPony[0]) + chosenPony.Substring(1, chosenPony.Length - 1);
-                        System.Diagnostics.Debug.WriteLine(ponyRoles.Keys.ElementAt(0));
-                        System.Diagnostics.Debug.WriteLine(chosenPony);
                         if (ponyRoles.ContainsKey(chosenPony))
                         {
                             Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
@@ -357,12 +355,17 @@ namespace Sweetie_bot
                                         for (int i = 0; i < ponyRoles.Count; ++i)
                                         {
                                             Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
-                                            if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                            if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0]))
+                                            {
+                                                await e.User.RemoveRoles(ponyrole);
+                                                System.Threading.Thread.Sleep(250);
+                                            }
                                         }
 
                                         string ponyString = ponyRoles[chosenPony];
                                         if (!chosenPony.Equals(PonyRolePrefix + "None"))
                                             await e.User.AddRoles(assignedRole);
+                                        System.Threading.Thread.Sleep(250);
                                         await e.Channel.SendMessage(string.Format("{0} {1}.", ponyString, e.User.ToString()));
                                     }
                                     else await e.Channel.SendMessage("You already have that role, silly.");
@@ -372,6 +375,38 @@ namespace Sweetie_bot
                             else await e.Channel.SendMessage("That pony has not been added to the discord group yet.");
                         }
                         else await e.Channel.SendMessage("That pony is not available at the moment.");
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("PonyRoll")
+                .Description("Selects a random pony role. Use !ponyroles command to see the list of ponies available.")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        PonyRolesUpdate(e.Server);
+                        Random rand = new Random();
+                        string chosenPony = ponyRoles.Keys.ElementAt(rand.Next(1, ponyRoles.Count));
+
+                        Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
+                        if (HasPonyRolePrerequisites(e))
+                        {
+                            for (int i = 0; i < ponyRoles.Count; ++i)
+                            {
+                                Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
+                                if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0]))
+                                {
+                                    await e.User.RemoveRoles(ponyrole);
+                                    System.Threading.Thread.Sleep(250);
+                                }
+                            }
+
+                            string ponyString = ponyRoles[chosenPony];
+                            await e.User.AddRoles(assignedRole);
+                            System.Threading.Thread.Sleep(250);
+                            await e.Channel.SendMessage(string.Format("{0} {1}.", ponyString, e.User.ToString()));
+                        }
+                        else await e.Channel.SendMessage("You need a role first.");
                     }
                 });
             
