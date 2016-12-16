@@ -202,11 +202,31 @@ namespace Sweetie_bot
                    (fillyguide.Length > 0 && e.User.HasRole(fillyguide[0]));
         }
 
+        bool HasManagerialRolePrerequisites(CommandEventArgs e)
+        {
+            Role[] managerRole = e.Server.FindRoles("Club Room Manager").ToArray();
+            Role[] technicianRole = e.Server.FindRoles("Sweetie-Bot Technician").ToArray();
+            return (managerRole.Length > 0 && e.User.HasRole(managerRole[0])) ||
+                (technicianRole.Length > 0 && e.User.HasRole(technicianRole[0]));
+        }
+
         private void PonyRolesUpdate(Server server)
         {
-            ponyRoles.Clear();
-            ponyRoles.Add("None", "You");
             Role[] serverRoles = server.Roles.ToArray();
+            List<string> serverRoleNames = new List<string>(serverRoles.Length);
+            for (int i = 0; i < server.RoleCount; ++ i)
+                serverRoleNames.Add(serverRoles[i].Name);
+
+            for (int i = ponyRoles.Count - 1; i >= 0; --i)
+            {
+                if (!serverRoleNames.Contains(ponyRoles.Keys.ElementAt(i)) &&
+                    !ponyRoles.Keys.ElementAt(i).Equals(PonyRolePrefix + "None"))
+                    ponyRoles.Remove(ponyRoles.Keys.ElementAt(i));
+            }
+
+            if (!ponyRoles.ContainsKey(PonyRolePrefix + "None"))
+                ponyRoles.Add(PonyRolePrefix + "None", "Nopony approves of");
+
             for (int i = 0; i < server.RoleCount; ++i)
             {
                 string serverName = serverRoles[i].Name;
@@ -215,7 +235,7 @@ namespace Sweetie_bot
                     if (!ponyRoles.ContainsKey(serverName))
                     {
                         string ponyName = serverName.Split(PonyRolePrefix)[1];
-                        ponyRoles.Add(serverRoles[i].Name, ponyName);
+                        ponyRoles.Add(serverRoles[i].Name, ponyName + " approves of");
                     }
                 }
             }
@@ -246,10 +266,7 @@ namespace Sweetie_bot
                 {
                     if (!e.Message.Channel.IsPrivate)
                     {
-                        Role[] managerRole = e.Server.FindRoles("Club Room Manager").ToArray();
-                        Role[] technicianRole = e.Server.FindRoles("Sweetie-Bot Technician").ToArray();
-                        if ((managerRole.Length > 0 && e.User.HasRole(managerRole[0])) ||
-                            (technicianRole.Length > 0 && e.User.HasRole(technicianRole[0])))
+                        if (HasManagerialRolePrerequisites(e))
                         {
                             filterEnabled = true;
                             await e.Channel.SendMessage("Profanity filter enabled");
@@ -264,10 +281,7 @@ namespace Sweetie_bot
                 {
                     if (!e.Message.Channel.IsPrivate)
                     {
-                        Role[] managerRole = e.Server.FindRoles("Club Room Manager").ToArray();
-                        Role[] technicianRole = e.Server.FindRoles("Sweetie-Bot Technician").ToArray();
-                        if ((managerRole.Length > 0 && e.User.HasRole(managerRole[0])) ||
-                            (technicianRole.Length > 0 && e.User.HasRole(technicianRole[0])))
+                        if (HasManagerialRolePrerequisites(e))
                         {
                             filterEnabled = false;
                             await e.Channel.SendMessage("Profanity filter disabled");
@@ -293,11 +307,27 @@ namespace Sweetie_bot
                 {
                     await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
+
+            _client.GetService<CommandService>().CreateCommand("PonyRoles")
+                .Do(async e =>
+                {
+                    PonyRolesUpdate(e.Server);
+
+                    string availablePonies = "Available ponies: ";
+                    for (int i = 0; i < ponyRoles.Count; ++i)
+                    {
+                        availablePonies += ponyRoles.Keys.ElementAt(i).Split(PonyRolePrefix)[1];
+                        if (i != ponyRoles.Count - 1)
+                            availablePonies += ", ";
+                    }
+
+                    await e.User.SendMessage(availablePonies);
+                });
             
             _client.GetService<CommandService>().CreateCommand("PonyRole")
                 .Parameter("ChosenPony", ParameterType.Required)
                 .Parameter("Message", ParameterType.Unparsed)
-                .Description("Available ponies: None, Applejack, Fluttershy, Pinkie, Rainbow, Rarity, Twilight, Bigmac, Lyra")
+                .Description("Select a pony role. Use !ponyroles command to see the list of ponies available.")
                 .Do(async e =>
                 {
                     if (!e.Message.Channel.IsPrivate)
@@ -305,9 +335,9 @@ namespace Sweetie_bot
                         PonyRolesUpdate(e.Server);
 
                         string chosenPony = e.GetArg("ChosenPony").ToLower();
-                        string message = e.GetArg("Message");
-                        System.Diagnostics.Debug.WriteLine(message);
-                        chosenPony = PonyRolePrefix + char.ToUpper(chosenPony[0]) + chosenPony.Substring(1, chosenPony.Length - 1);
+                        chosenPony = ("" + PonyRolePrefix) + char.ToUpper(chosenPony[0]) + chosenPony.Substring(1, chosenPony.Length - 1);
+                        System.Diagnostics.Debug.WriteLine(ponyRoles.Keys.ElementAt(0));
+                        System.Diagnostics.Debug.WriteLine(chosenPony);
                         if (ponyRoles.ContainsKey(chosenPony))
                         {
                             Role[] assignedRole = e.Server.FindRoles(chosenPony).ToArray();
@@ -317,23 +347,26 @@ namespace Sweetie_bot
                                 {
                                     if (HasPonyRolePrerequisites(e))
                                     {
-                                        for (int i = 1; i < ponyRoles.Count; ++i)
+                                        string message = e.GetArg("Message");
+                                        if (message.Length > 0 && message.StartsWith("msg ", StringComparison.OrdinalIgnoreCase) && HasManagerialRolePrerequisites(e))
                                         {
-                                            Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
-                                            if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                            string ponymessage = message.Split(new string[] { "msg "}, StringSplitOptions.None)[1];
+                                            ponyRoles[chosenPony] = ponymessage;
+                                            await e.User.SendMessage(chosenPony.Split(PonyRolePrefix)[1] + " now says " + ponymessage + " the user.");
                                         }
-
-                                        string ponyString = "";
-
-                                        if (!chosenPony.Equals(PonyRolePrefix + "None"))
+                                        else
                                         {
-                                            ponyString = ponyRoles[chosenPony];
-                                            await e.User.AddRoles(assignedRole);
-                                        }
-                                        else ponyString = e.User.ToString();
+                                            for (int i = 1; i < ponyRoles.Count; ++i)
+                                            {
+                                                Role[] ponyrole = e.Server.FindRoles(ponyRoles.Keys.ElementAt(i)).ToArray();
+                                                if (ponyrole.Length > 0 && e.User.HasRole(ponyrole[0])) await e.User.RemoveRoles(ponyrole);
+                                            }
 
-                                        await e.Channel.SendMessage(string.Format("{0} approves of {1}.", ponyString, e.User.ToString()));
-                                        
+                                            string ponyString = ponyRoles[chosenPony];
+                                            if (!chosenPony.Equals(PonyRolePrefix + "None"))
+                                                await e.User.AddRoles(assignedRole);
+                                            await e.Channel.SendMessage(string.Format("{0} {1}.", ponyString, e.User.ToString()));
+                                        }
                                     }
                                     else await e.Channel.SendMessage("You need a role first.");
                                 }
