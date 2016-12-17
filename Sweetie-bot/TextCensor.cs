@@ -48,7 +48,7 @@ namespace Sweetie_bot
             //float startTime = Time.realtimeSinceStartup;
 
             if (message == null)
-                throw new ArgumentNullException("text");
+                return message;
 
             string quickfilter = QuickFilter(message);
             string alteredMessage = RemoveNonAlphaNumeric(quickfilter);
@@ -222,12 +222,20 @@ namespace Sweetie_bot
                 }
             }
 
+
             string resultText = "";
             for (int i = 0; i < alteredText.Length; ++i)
             {
+
                 if (text[i] == '¢' && censoredText[i] == '¢')
                     resultText += alteredText[i];
-                else resultText += censoredText[i];
+                else
+                {
+                    char c = censoredText[i];
+                    if (char.IsUpper(alteredText[i]))
+                        c = char.ToUpper(c);
+                    resultText += c;
+                }
             }
 
             return resultText;
