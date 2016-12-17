@@ -267,7 +267,7 @@ namespace Sweetie_bot
                     if (!e.Message.Channel.IsPrivate)
                     {
                         if (HasManagerialRolePrerequisites(e))
-                        {
+                          {
                             filterEnabled = true;
                             await e.Channel.SendMessage("Profanity filter enabled");
                         }
@@ -540,7 +540,7 @@ namespace Sweetie_bot
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
                             string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
-                            if (!filtered.Equals(e.Message.Text))
+                            if (censorshipManager.censor.CensorCheck(e.Message.Text.ToLower()))
                             {
                                 await e.Message.Delete();
 

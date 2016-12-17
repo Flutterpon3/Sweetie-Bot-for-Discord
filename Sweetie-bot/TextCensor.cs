@@ -26,6 +26,17 @@ namespace Sweetie_bot
             Dictionary = dictWords;
         }
 
+        public bool CensorCheck(string CheckString)
+        {
+            foreach(string word in CheckString.Split(' ').ToArray())
+            {
+                if (CensoredWords.ContainsKey(word.ToLower())){
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
 
         public string PureCensor(string censoredText)
