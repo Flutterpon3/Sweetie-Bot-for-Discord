@@ -199,19 +199,20 @@ namespace Sweetie_bot
 
             string alteredbadwords = CensoredWordsString;
             int cap = 3;
-            for (int i = 0; i < key.Length - 2; i += 3)
+            //for (int i = 0; i < key.Length - cap; i += 3)
+            for (int i = 0; i < key.Length - cap; ++i)
             {
                 string set = "";
+                /*
                 int limit = key.Length - i;
                 if (limit > cap) limit = cap;
 
                 int offset = 0;
                 if (limit < cap) offset = cap - limit;
-
+                */
                 for (int j = 0; j < cap; ++j)
-                {
-                    set += key[j + i - offset];
-                }
+                    set += key[j + i];
+                    //set += key[j + i - offset];
 
                 string regularExpression = ToRegexPattern(set);
                 alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatch,
@@ -232,12 +233,10 @@ namespace Sweetie_bot
                     
                 }
             }
-
-
+            
             string resultText = "";
             for (int i = 0; i < alteredText.Length; ++i)
             {
-
                 if (text[i] == '¢' && censoredText[i] == '¢')
                     resultText += alteredText[i];
                 else
@@ -272,6 +271,8 @@ namespace Sweetie_bot
             int currentDictIndex = 0;
             int wordPlace = 0;
             List<int> dictIndexes = new List<int>();
+            string wordString = "";
+            List<string> words = new List<string>();
             for (int i = 0; i < cleanDictText.Length; ++i)
             {
                 char lower = char.ToLower(cleanDictText[i]);
@@ -304,24 +305,32 @@ namespace Sweetie_bot
                     currentDictIndex = 0;
                     wordPlace = 0;
                 }
+
+                if (isalpha)
+                {
+                    wordString += cleanDictText[i];
+                    if (i == cleanDictText.Length - 1)
+                    {
+                        words.Add(wordString);
+                        wordString = "";
+                    }
+                }
+                else if (wordString != "")
+                {
+                    words.Add(wordString);
+                    wordString = "";
+                }
             }
 
             for (int i = 0; i < dictIndexes.Count; ++i)
             {
-                string[] words3 = lText.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string word in words3)
+                ///string[] words = lText.Split(new char[] { ' ', '\t', '\r', '\n', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string word in words)
                 {
-                    //string readword = word;
-                    //bool contains = Dictionary[dictIndexes[i]].ContainsKey(readword);
-
-                    //if (!contains)
-                    //{
-                    string readword = RemoveNonAlphaNumeric(word);
-                    bool contains = Dictionary[dictIndexes[i]].ContainsKey(readword);
-                    //}
-                    if (contains)
+                    if (Dictionary[dictIndexes[i]].ContainsKey(word))
                     {
-                        string regularExpression = ToRegexPattern(readword);
+                        
+                        string regularExpression = ToRegexPattern(word);
 
                         cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatch,
                                                     RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);

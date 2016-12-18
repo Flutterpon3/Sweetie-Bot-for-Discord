@@ -513,7 +513,7 @@ namespace Sweetie_bot
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
                             string filtered = censorshipManager.censor.CensorMessage(e.After.Text);
-                            if (!filtered.Equals(e.After.Text))
+                            if (filtered != null && filtered != e.After.Text)
                             {
                                 await e.After.Delete();
 
@@ -540,7 +540,7 @@ namespace Sweetie_bot
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
                             string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
-                            if (censorshipManager.censor.CensorCheck(e.Message.Text.ToLower()))
+                            if (filtered != null && filtered != e.Message.Text)
                             {
                                 await e.Message.Delete();
 
