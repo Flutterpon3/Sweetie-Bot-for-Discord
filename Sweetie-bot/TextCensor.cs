@@ -272,7 +272,8 @@ namespace Sweetie_bot
             int wordPlace = 0;
             List<int> dictIndexes = new List<int>();
             string wordString = "";
-            List<string> words = new List<string>();
+            int wordDictIndex = -1;
+            List<List<string>> words = new List<List<string>>();
             for (int i = 0; i < cleanDictText.Length; ++i)
             {
                 char lower = char.ToLower(cleanDictText[i]);
@@ -300,8 +301,18 @@ namespace Sweetie_bot
                 {
                     if (currentDictIndex != -1)
                     {
-                        dictIndexes.Add(currentDictIndex);
+                        int wordIndex = dictIndexes.IndexOf(currentDictIndex);
+                        if (wordIndex == -1)
+                        {
+                            wordIndex = dictIndexes.Count;
+                            dictIndexes.Add(currentDictIndex);
+                            words.Add(new List<string>());
+                        }
+
+                        if (wordDictIndex == -1)
+                            wordDictIndex = wordIndex;
                     }
+                    
                     currentDictIndex = 0;
                     wordPlace = 0;
                 }
@@ -311,25 +322,25 @@ namespace Sweetie_bot
                     wordString += cleanDictText[i];
                     if (i == cleanDictText.Length - 1)
                     {
-                        words.Add(wordString);
+                        words[wordDictIndex].Add(wordString);
                         wordString = "";
+                        wordDictIndex = -1;
                     }
                 }
                 else if (wordString != "")
                 {
-                    words.Add(wordString);
+                    words[wordDictIndex].Add(wordString);
                     wordString = "";
+                    wordDictIndex = -1;
                 }
             }
-
+            
             for (int i = 0; i < dictIndexes.Count; ++i)
             {
-                ///string[] words = lText.Split(new char[] { ' ', '\t', '\r', '\n', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string word in words)
+                foreach (string word in words[i])
                 {
                     if (Dictionary[dictIndexes[i]].ContainsKey(word))
                     {
-                        
                         string regularExpression = ToRegexPattern(word);
 
                         cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatch,

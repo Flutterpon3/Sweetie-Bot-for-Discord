@@ -65,8 +65,8 @@ namespace Sweetie_bot
                 canReport = true;
             }
             else canReport = false;
-
-            return Math.Max(count, 6);
+            
+            return Math.Min(count, 6);
         }
 
         private void sub(Object source, ElapsedEventArgs e)
@@ -578,7 +578,7 @@ namespace Sweetie_bot
                                 if (userProfanityCount[e.User.Name].Report)
                                     await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562>");
 
-                                await e.User.SendMessage(profaneMessageResponses[0] + "\r" + outputMessage);
+                                await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
                             }
                         }
                     }
