@@ -266,79 +266,83 @@ namespace Sweetie_bot
 
         public string Strip(string text)
         {
-            string lText = text.ToLower();
-            string cleanDictText = lText;
-            int currentDictIndex = 0;
-            int wordPlace = 0;
-            List<int> dictIndexes = new List<int>();
-            string wordString = "";
-            List<string> words = new List<string>();
-            for (int i = 0; i < cleanDictText.Length; ++i)
+            if (text != null)
             {
-                char lower = char.ToLower(cleanDictText[i]);
-                bool isalpha = isAlpha(lower) || lower == '\'';
-                if (wordPlace < 2)
+                string lText = text.ToLower();
+                string cleanDictText = lText;
+                int currentDictIndex = 0;
+                int wordPlace = 0;
+                List<int> dictIndexes = new List<int>();
+                string wordString = "";
+                List<string> words = new List<string>();
+                for (int i = 0; i < cleanDictText.Length; ++i)
                 {
+                    char lower = char.ToLower(cleanDictText[i]);
+                    bool isalpha = isAlpha(lower) || lower == '\'';
+                    if (wordPlace < 2)
+                    {
+                        if (isalpha)
+                        {
+                            for (int j = currentDictIndex; j < Dictionary.Count; ++j)
+                            {
+                                if (Dictionary[j].ElementAt(0).Value[wordPlace] == lower)
+                                {
+                                    currentDictIndex = j;
+                                    break;
+                                }
+
+                                if (j == Dictionary.Count - 1)
+                                    currentDictIndex = -1;
+                            }
+                            ++wordPlace;
+                        }
+                    }
+
+                    if (wordPlace == 2 || !isalpha)
+                    {
+                        if (currentDictIndex != -1)
+                        {
+                            dictIndexes.Add(currentDictIndex);
+                        }
+                        currentDictIndex = 0;
+                        wordPlace = 0;
+                    }
+
                     if (isalpha)
                     {
-                        for (int j = currentDictIndex; j < Dictionary.Count; ++j)
+                        wordString += cleanDictText[i];
+                        if (i == cleanDictText.Length - 1)
                         {
-                            if (Dictionary[j].ElementAt(0).Value[wordPlace] == lower)
-                            {
-                                currentDictIndex = j;
-                                break;
-                            }
-
-                            if (j == Dictionary.Count - 1)
-                                currentDictIndex = -1;
+                            words.Add(wordString);
+                            wordString = "";
                         }
-                        ++wordPlace;
                     }
-                }
-
-                if (wordPlace == 2 || !isalpha)
-                {
-                    if (currentDictIndex != -1)
-                    {
-                        dictIndexes.Add(currentDictIndex);
-                    }
-                    currentDictIndex = 0;
-                    wordPlace = 0;
-                }
-
-                if (isalpha)
-                {
-                    wordString += cleanDictText[i];
-                    if (i == cleanDictText.Length - 1)
+                    else if (wordString != "")
                     {
                         words.Add(wordString);
                         wordString = "";
                     }
                 }
-                else if (wordString != "")
-                {
-                    words.Add(wordString);
-                    wordString = "";
-                }
-            }
 
-            for (int i = 0; i < dictIndexes.Count; ++i)
-            {
-                ///string[] words = lText.Split(new char[] { ' ', '\t', '\r', '\n', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string word in words)
+                for (int i = 0; i < dictIndexes.Count; ++i)
                 {
-                    if (Dictionary[dictIndexes[i]].ContainsKey(word))
+                    ///string[] words = lText.Split(new char[] { ' ', '\t', '\r', '\n', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string word in words)
                     {
-                        
-                        string regularExpression = ToRegexPattern(word);
+                        if (Dictionary[dictIndexes[i]].ContainsKey(word))
+                        {
 
-                        cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatch,
-                                                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                            string regularExpression = ToRegexPattern(word);
+
+                            cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatch,
+                                                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                        }
                     }
                 }
-            }
 
-            return cleanDictText;
+                return cleanDictText;
+            }
+            else return text;
         }
 
 
