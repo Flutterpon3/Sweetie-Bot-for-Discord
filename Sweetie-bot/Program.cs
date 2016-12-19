@@ -17,17 +17,28 @@ namespace Sweetie_bot
         private Timer profanityTimer;
         bool canReport;
         int count;
-
+        bool profanityDeletion;
+        int profanityDeletionHours;
+        int profanityDeletionHoursCap;
+         
         public bool Report
         {
             get { return canReport; }
         }
 
+        public bool DeleteProfanity
+        {
+            get { return profanityDeletion; }
+        }
+
         public ProfanityCounter()
         {
+            profanityDeletionHours = 0;
+            profanityDeletionHoursCap = 0;
             count = 0;
-            canReport = true;
-            profanityTimer = new Timer(20 * 1000);
+            canReport = false;
+            profanityDeletion = false;
+            profanityTimer = new Timer(60 * 60000);
             profanityTimer.Elapsed += sub;
             profanityTimer.AutoReset = true;
             profanityTimer.Start();
@@ -42,24 +53,40 @@ namespace Sweetie_bot
 
         public int add()
         {
-            profanityTimer.Stop();
-            profanityTimer.Start();
             count++;
-            if (count > 6)
+
+            if (count > 5) profanityDeletion = true;
+
+            if (count == 6)
             {
-                count = 6;
-                canReport = false;
+                profanityDeletionHoursCap += 24;
+                if (profanityDeletionHoursCap >= 24 * 7)
+                    profanityDeletionHoursCap = 24 * 7;
+                canReport = true;
             }
-            return count;
+            else canReport = false;
+
+            return Math.Max(count, 6);
         }
 
         private void sub(Object source, ElapsedEventArgs e)
         {
-            count--;
-            if (count < 0)
+            if (profanityDeletion)
+            {
+                if (profanityDeletionHours >= profanityDeletionHoursCap)
+                {
+                    profanityDeletionHours = 0;
+                    profanityDeletion = false;
+                    count = 0;
+                }
+                else profanityDeletionHours++;
+            }
+            else
             {
                 count = 0;
-                if (!canReport) canReport = true;
+                profanityDeletionHoursCap -= 2;
+                if (profanityDeletionHoursCap < 0)
+                    profanityDeletionHoursCap = 0;
             }
         }
     }
@@ -165,8 +192,8 @@ namespace Sweetie_bot
             "I asked you nicely before, would you please replace the profane content of your message?",
             "Pretty please with a cherry on top?",
             "I'll ask again... PLEASE replace the profane content in your message!",
+            "If you continue to post profane messages, future messages that contain profanity will be automatically deleted.",
             "You're making fun of me, aren't you?",
-            ".....",
             "You know what... I showed that last message of yours to a certain somepony, and do you want to know what you've done?\rYou made Fluttershy cry!"
         });
 
@@ -508,22 +535,22 @@ namespace Sweetie_bot
             {
                 if (!e.After.IsAuthor)
                 {
-                    if (filterEnabled)
+                    if (filterEnabled && !e.Channel.IsPrivate)
                     {
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
                             string filtered = censorshipManager.censor.CensorMessage(e.After.Text);
                             if (filtered != null && filtered != e.After.Text)
                             {
-                                await e.After.Delete();
-
                                 int count = GetProfanityCount(e.User.Name);
                                 string outputMessage = GetOutputMessage(e.User.Name, count, e.After.Text, filtered);
-                                if (count == 6)
-                                {
-                                    if (userProfanityCount[e.User.Name].Report)
-                                        await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562>");
-                                }
+
+                                if (userProfanityCount[e.User.Name].DeleteProfanity)
+                                    await e.After.Delete();
+
+                                if (userProfanityCount[e.User.Name].Report)
+                                    await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562> \rFuture messages from this user containing profanity will be automatically deleted.");
+                                
                                 await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
                             }
                         }
@@ -535,23 +562,23 @@ namespace Sweetie_bot
             {
                 if (!e.Message.IsAuthor)
                 {
-                    if (filterEnabled)
+                    if (filterEnabled && !e.Channel.IsPrivate)
                     {
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
                             string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
                             if (filtered != null && filtered != e.Message.Text)
                             {
-                                await e.Message.Delete();
-
                                 int count = GetProfanityCount(e.User.Name);
                                 string outputMessage = GetOutputMessage(e.User.Name, count, e.Message.Text, filtered);
-                                if (count == 6)
-                                {
-                                    if (userProfanityCount[e.User.Name].Report)
-                                        await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562>");
-                                }
-                                await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                                
+                                if (userProfanityCount[e.User.Name].DeleteProfanity)
+                                    await e.Message.Delete();
+
+                                if (userProfanityCount[e.User.Name].Report)
+                                    await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562>");
+
+                                await e.User.SendMessage(profaneMessageResponses[0] + "\r" + outputMessage);
                             }
                         }
                     }

@@ -276,7 +276,7 @@ namespace Sweetie_bot
             for (int i = 0; i < cleanDictText.Length; ++i)
             {
                 char lower = char.ToLower(cleanDictText[i]);
-                bool isalpha = isAlpha(lower);
+                bool isalpha = isAlpha(lower) || lower == '\'';
                 if (wordPlace < 2)
                 {
                     if (isalpha)
