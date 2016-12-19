@@ -266,90 +266,94 @@ namespace Sweetie_bot
 
         public string Strip(string text)
         {
-            string lText = text.ToLower();
-            string cleanDictText = lText;
-            int currentDictIndex = 0;
-            int wordPlace = 0;
-            List<int> dictIndexes = new List<int>();
-            string wordString = "";
-            int wordDictIndex = -1;
-            List<List<string>> words = new List<List<string>>();
-            for (int i = 0; i < cleanDictText.Length; ++i)
+            if (text != null)
             {
-                char lower = char.ToLower(cleanDictText[i]);
-                bool isalpha = isAlpha(lower) || lower == '\'';
-                if (wordPlace < 2)
+                string lText = text.ToLower();
+                string cleanDictText = lText;
+                int currentDictIndex = 0;
+                int wordPlace = 0;
+                List<int> dictIndexes = new List<int>();
+                string wordString = "";
+                int wordDictIndex = -1;
+                List<List<string>> words = new List<List<string>>();
+                for (int i = 0; i < cleanDictText.Length; ++i)
                 {
-                    if (isalpha)
+                    char lower = char.ToLower(cleanDictText[i]);
+                    bool isalpha = isAlpha(lower) || lower == '\'';
+                    if (wordPlace < 2)
                     {
-                        for (int j = currentDictIndex; j < Dictionary.Count; ++j)
+                        if (isalpha)
                         {
-                            if (Dictionary[j].ElementAt(0).Value[wordPlace] == lower)
+                            for (int j = currentDictIndex; j < Dictionary.Count; ++j)
                             {
-                                currentDictIndex = j;
-                                break;
+                                if (Dictionary[j].ElementAt(0).Value[wordPlace] == lower)
+                                {
+                                    currentDictIndex = j;
+                                    break;
+                                }
+
+                                if (j == Dictionary.Count - 1)
+                                    currentDictIndex = -1;
+                            }
+                            ++wordPlace;
+                        }
+                    }
+
+                    if (wordPlace == 2 || !isalpha)
+                    {
+                        if (currentDictIndex != -1)
+                        {
+                            int wordIndex = dictIndexes.IndexOf(currentDictIndex);
+                            if (wordIndex == -1)
+                            {
+                                wordIndex = dictIndexes.Count;
+                                dictIndexes.Add(currentDictIndex);
+                                words.Add(new List<string>());
                             }
 
-                            if (j == Dictionary.Count - 1)
-                                currentDictIndex = -1;
+                            if (wordDictIndex == -1)
+                                wordDictIndex = wordIndex;
                         }
-                        ++wordPlace;
-                    }
-                }
 
-                if (wordPlace == 2 || !isalpha)
-                {
-                    if (currentDictIndex != -1)
+                        currentDictIndex = 0;
+                        wordPlace = 0;
+                    }
+
+                    if (isalpha)
                     {
-                        int wordIndex = dictIndexes.IndexOf(currentDictIndex);
-                        if (wordIndex == -1)
+                        wordString += cleanDictText[i];
+                        if (i == cleanDictText.Length - 1)
                         {
-                            wordIndex = dictIndexes.Count;
-                            dictIndexes.Add(currentDictIndex);
-                            words.Add(new List<string>());
+                            words[wordDictIndex].Add(wordString);
+                            wordString = "";
+                            wordDictIndex = -1;
                         }
-
-                        if (wordDictIndex == -1)
-                            wordDictIndex = wordIndex;
                     }
-                    
-                    currentDictIndex = 0;
-                    wordPlace = 0;
-                }
-
-                if (isalpha)
-                {
-                    wordString += cleanDictText[i];
-                    if (i == cleanDictText.Length - 1)
+                    else if (wordString != "")
                     {
                         words[wordDictIndex].Add(wordString);
                         wordString = "";
                         wordDictIndex = -1;
                     }
                 }
-                else if (wordString != "")
-                {
-                    words[wordDictIndex].Add(wordString);
-                    wordString = "";
-                    wordDictIndex = -1;
-                }
-            }
-            
-            for (int i = 0; i < dictIndexes.Count; ++i)
-            {
-                foreach (string word in words[i])
-                {
-                    if (Dictionary[dictIndexes[i]].ContainsKey(word))
-                    {
-                        string regularExpression = ToRegexPattern(word);
 
-                        cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatch,
-                                                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                for (int i = 0; i < dictIndexes.Count; ++i)
+                {
+                    foreach (string word in words[i])
+                    {
+                        if (Dictionary[dictIndexes[i]].ContainsKey(word))
+                        {
+                            string regularExpression = ToRegexPattern(word);
+
+                            cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatch,
+                                                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                        }
                     }
                 }
-            }
 
-            return cleanDictText;
+                return cleanDictText;
+            }
+            else return text;
         }
 
 
