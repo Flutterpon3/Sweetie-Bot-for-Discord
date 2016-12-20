@@ -570,6 +570,7 @@ namespace Sweetie_bot
                             if (filtered != null && filtered != e.Message.Text)
                             {
                                 int count = GetProfanityCount(e.User.Name);
+                                Console.WriteLine(e.Message.ToString());
                                 string outputMessage = GetOutputMessage(e.User.Name, count, e.Message.Text, filtered);
                                 
                                 if (userProfanityCount[e.User.Name].DeleteProfanity)
