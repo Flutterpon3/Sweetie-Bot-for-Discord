@@ -10,9 +10,9 @@ namespace Sweetie_bot
     {
         public Dictionary<string, string> CensoredWords { get; private set; }
         public string CensoredWordsString { get; private set; }
-        public List<Dictionary<string, string>> Dictionary { get; private set; }
+        public Dictionary<string, Dictionary<string, string>> Dictionary { get; private set; }
 
-        public Censor(Dictionary<string, string> censoredWords, List<Dictionary<string, string>> dictWords)
+        public Censor(Dictionary<string, string> censoredWords, Dictionary<string, Dictionary<string, string>> dictWords)
         {
             if (censoredWords == null)
                 throw new ArgumentNullException("censoredWords");
@@ -270,28 +270,23 @@ namespace Sweetie_bot
             {
                 string lText = text.ToLower();
                 string cleanDictText = lText;
-                int currentDictIndex = 0;
+                string currentDict = Dictionary.Keys.ElementAt(0);
                 int wordPlace = 0;
-                List<int> dictIndexes = new List<int>();
+                List<string> dicts = new List<string>();
                 string wordString = "";
                 int wordDictIndex = -1;
                 List<List<string>> words = new List<List<string>>();
                 for (int i = 0; i < cleanDictText.Length; ++i)
                 {
                     char lower = char.ToLower(cleanDictText[i]);
-                    bool isalpha = isAlpha(lower) || lower == '\'';
+                    bool isalpha = isAlpha(lower);// || lower == '\'';
                     if (wordPlace < 2)
                     {
                         if (isalpha)
                         {
-                            for (int j = currentDictIndex; j < Dictionary.Count; ++j)
-                            {
-                                if (Dictionary[j].ElementAt(0).Value[wordPlace] == lower)
-                                {
-                                    currentDictIndex = j;
-                                    break;
-                                }
-                            }
+                            if (Dictionary.ContainsKey(wordString + lower))
+                                currentDict = wordString + lower;
+
                             ++wordPlace;
                         }
                     }
@@ -300,17 +295,17 @@ namespace Sweetie_bot
                     {
                         if (wordDictIndex == -1)
                         {
-                            int wordIndex = dictIndexes.IndexOf(currentDictIndex);
+                            int wordIndex = dicts.IndexOf(currentDict);
                             if (wordIndex == -1)
                             {
-                                wordIndex = dictIndexes.Count;
-                                dictIndexes.Add(currentDictIndex);
+                                wordIndex = dicts.Count;
+                                dicts.Add(currentDict);
                                 words.Add(new List<string>());
                             }
                             wordDictIndex = wordIndex;
                         }
 
-                        currentDictIndex = 0;
+                        currentDict = Dictionary.Keys.ElementAt(0);
                         wordPlace = 0;
                     }
 
@@ -332,11 +327,11 @@ namespace Sweetie_bot
                     }
                 }
 
-                for (int i = 0; i < dictIndexes.Count; ++i)
+                for (int i = 0; i < dicts.Count; ++i)
                 {
                     foreach (string word in words[i])
                     {
-                        if (Dictionary[dictIndexes[i]].ContainsKey(word))
+                        if (Dictionary[dicts[i]].ContainsKey(word))
                         {
                             string regularExpression = ToRegexPattern(word);
 
@@ -594,10 +589,10 @@ namespace Sweetie_bot
             Array.Reverse(dictionary);
             Array.Sort(dictionary);
 
-            List<Dictionary<string, string>> dividedDict = new List<Dictionary<string, string>>();
+            Dictionary<string, Dictionary<string, string>> dividedDict = new Dictionary<string, Dictionary<string, string>>();
             char previousFirstLetter = (char)0;
             char previousSecondLetter = (char)0;
-            int div = -1;
+            string charDiv = "";
             for (int i = 0; i < dictionary.Length; ++i)
             {
                 string word = dictionary[i];
@@ -605,20 +600,20 @@ namespace Sweetie_bot
                 {
                     if (word[0] != previousFirstLetter || word[1] != previousSecondLetter)
                     {
-                        if (div != -1)
+                        if (charDiv != "")
                         {
-                            List<string> temp = dividedDict[div].Values.ToList();
+                            List<string> temp = dividedDict[charDiv].Values.ToList();
                             temp.Sort((x, y) => x.Length.CompareTo(y.Length));
                             temp.Reverse();
-                            dividedDict[div] = temp.ToDictionary(x => x, x => x);
+                            dividedDict[charDiv] = temp.ToDictionary(x => x, x => x);
                         }
-                        dividedDict.Add(new Dictionary<string, string>());
-                        ++div;
+                        charDiv = "" + word[0] + word[1];
+                        dividedDict.Add(charDiv, new Dictionary<string, string>());
 
                         previousFirstLetter = word[0];
                         previousSecondLetter = word[1];
                     }
-                    dividedDict[div].Add(word, word);
+                    dividedDict[charDiv].Add(word, word);
                 }
             }
 
