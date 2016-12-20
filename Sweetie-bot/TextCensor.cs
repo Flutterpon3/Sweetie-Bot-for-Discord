@@ -291,9 +291,6 @@ namespace Sweetie_bot
                                     currentDictIndex = j;
                                     break;
                                 }
-
-                                if (j == Dictionary.Count - 1)
-                                    currentDictIndex = -1;
                             }
                             ++wordPlace;
                         }
@@ -301,7 +298,7 @@ namespace Sweetie_bot
 
                     if (wordPlace == 2 || !isalpha)
                     {
-                        if (currentDictIndex != -1)
+                        if (wordDictIndex == -1)
                         {
                             int wordIndex = dictIndexes.IndexOf(currentDictIndex);
                             if (wordIndex == -1)
@@ -310,9 +307,7 @@ namespace Sweetie_bot
                                 dictIndexes.Add(currentDictIndex);
                                 words.Add(new List<string>());
                             }
-
-                            if (wordDictIndex == -1)
-                                wordDictIndex = wordIndex;
+                            wordDictIndex = wordIndex;
                         }
 
                         currentDictIndex = 0;
