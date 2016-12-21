@@ -212,7 +212,7 @@ namespace Sweetie_bot
                     int offset = 0;
                     if (limit < cap) offset = cap - limit;
                     */
-                    for (int j = i; j < Math.Min(cap, key.Length); ++j)
+                    for (int j = i; j < Math.Min(cap + i, key.Length); ++j)
                         set += key[j];
                     //set += key[j - offset];
 
