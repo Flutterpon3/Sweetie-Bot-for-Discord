@@ -12,6 +12,15 @@ namespace Sweetie_bot
     using System.Threading.Tasks;
     using System.Timers;
 
+    public static class StringExt
+    {
+        public static string Truncate(this string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        }
+    }
+
     public class ProfanityCounter
     {
         private Timer profanityTimer;
@@ -579,7 +588,8 @@ namespace Sweetie_bot
                                 if (userProfanityCount[e.User.Name].Report)
                                     await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562>");
 
-                                await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                                await e.User.SendMessage(profaneMessageResponses[count]);
+                                await e.User.SendMessage(outputMessage.Truncate(2000));
                             }
                         }
                     }
