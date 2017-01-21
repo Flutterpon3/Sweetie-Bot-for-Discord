@@ -33,7 +33,9 @@ namespace Sweetie_bot
                 _nextSong = true;
             }
 
+#pragma warning disable CS4014 // Not awaited to allow for method to close
             if (startLoop) { DoWorkAsyncInfiniteLoop(); }
+#pragma warning restore CS4014 
         }
 
         public static void Enque(string songUrl)
@@ -63,7 +65,9 @@ namespace Sweetie_bot
                     _nextSong = false;
                     string songUrl;
                     if (_songQueue.TryDequeue(out songUrl))
+#pragma warning disable CS4014 // not awaited to because of infiniant loop call.
                         SendAudio(songUrl);
+#pragma warning restore CS4014 
                 }
             }
         }
@@ -178,7 +182,9 @@ namespace Sweetie_bot
                         {
                             _audioClient.Send(buffer, 0, blockSize);
                         }
+#pragma warning disable CS0168 // Variable is declared but never used, supressed error because it must be declared to be caught
                         catch (OperationCanceledException e)
+#pragma warning restore CS0168 
                         {
                             //if (!(_audioClient.State == ConnectionState.Disconnecting || _audioClient.State == ConnectionState.Disconnected))
                             //{
