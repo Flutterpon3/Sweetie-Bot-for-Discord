@@ -359,6 +359,35 @@ namespace Sweetie_bot
                     await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
 
+            _client.GetService<CommandService>().CreateCommand("timeout")
+                .Parameter("TimeoutUser", ParameterType.Required)
+                .Parameter("TimeoutLength", ParameterType.Required)
+                .Do(async e =>
+                {
+                    //if (e.User.HasRole(e.Server.GetRole(249751522018066435)))
+                    {
+                        Timer timeoutCounter = new Timer(double.Parse(e.GetArg("TimeoutLength")) * 1000);
+
+                        ulong userID = ulong.Parse(e.GetArg("TimeoutUser").Trim('<', '>', '@'));
+
+                        User user = e.Server.GetUser(userID);
+                        Console.Write(user.ToString());
+
+                        Role banRole = e.Server.GetRole(251120565358821376);
+
+                        await user.AddRoles(banRole);
+
+                        timeoutCounter.Elapsed += (sender, ev) => endTimeout(sender, ev, e, userID, banRole);
+                        timeoutCounter.Enabled = true;
+                        timeoutCounter.AutoReset = false;
+                        timeoutCounter.Start();
+                    }
+                    /*else
+                    {
+                        await e.Channel.SendMessage("You are not a mod.");
+                    }/**/
+                });
+
             _client.GetService<CommandService>().CreateCommand("PonyRoles")
                 .Do(async e =>
                 {
