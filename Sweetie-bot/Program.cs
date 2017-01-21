@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 
+
 namespace Sweetie_bot
 {
 
@@ -12,13 +13,14 @@ namespace Sweetie_bot
     using Newtonsoft.Json;
     using System.IO;
     using System.Timers;
+    
 
     public static class StringExt
     {
         public static string Truncate(this string value, int maxLength)
         {
             if (string.IsNullOrEmpty(value)) return value;
-            return value.Length <= maxLength? value : value.Substring(0, maxLength);
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }
     }
 
@@ -119,7 +121,7 @@ namespace Sweetie_bot
         private void endTimeout(object sender, ElapsedEventArgs e, CommandEventArgs ev, ulong userID, Role banrole)
         {
             Console.Write(string.Format("USER TIMEOUT EXPIRE: {0}", ev.Server.GetUser(userID).ToString()));
-                ev.Server.GetUser(userID).RemoveRoles(banrole);
+            ev.Server.GetUser(userID).RemoveRoles(banrole);
         }
 
         private static Timer pokeTimer = new Timer(60 * 1000);
@@ -200,7 +202,7 @@ namespace Sweetie_bot
         private static char PonyRolePrefix = '^';
 
         Dictionary<string, string> ponyRoles = new Dictionary<string, string>();
-        
+
         Dictionary<string, ProfanityCounter> userProfanityCount = new Dictionary<string, ProfanityCounter>();
 
         List<string> profaneMessageResponses = new List<string>(new string[]
@@ -293,10 +295,9 @@ namespace Sweetie_bot
 
             if (File.Exists("./ponyroles_messages.txt"))
             {
-                ponyRoles = JsonConvert.DeserializeObject < Dictionary < string, string>>
+                ponyRoles = JsonConvert.DeserializeObject<Dictionary<string, string>>
                                     (File.ReadAllText("ponyroles_messages.txt"));
             }
-
 
             censorshipManager = new CensorshipManager();
             censorshipManager.Initialize();
