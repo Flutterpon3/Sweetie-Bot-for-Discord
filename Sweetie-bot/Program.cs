@@ -7,10 +7,20 @@ namespace Sweetie_bot
 {
 
     using Discord;
+    using Discord.Audio;
     using Discord.Commands;
+    using Newtonsoft.Json;
     using System.IO;
-    using System.Threading.Tasks;
     using System.Timers;
+
+    public static class StringExt
+    {
+        public static string Truncate(this string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength? value : value.Substring(0, maxLength);
+        }
+    }
 
     public class ProfanityCounter
     {
@@ -106,9 +116,15 @@ namespace Sweetie_bot
             pokeState = 0;
         }
 
+        private void endTimeout(object sender, ElapsedEventArgs e, CommandEventArgs ev, ulong userID, Role banrole)
+        {
+            Console.Write(string.Format("USER TIMEOUT EXPIRE: {0}", ev.Server.GetUser(userID).ToString()));
+                ev.Server.GetUser(userID).RemoveRoles(banrole);
+        }
+
         private static Timer pokeTimer = new Timer(60 * 1000);
 
-        private DiscordClient _client;
+        private DiscordClient _client = null;
 
         private CensorshipManager censorshipManager;
 
@@ -175,6 +191,7 @@ namespace Sweetie_bot
             "colt-x-female",
             "mlp-loli",
             "mlp-shota",
+            "roleplay",
             "mlp-loli-x-shota",
             "extreme-fetish-general",
             "extreme-fetish-loli-n-shota"
@@ -267,12 +284,18 @@ namespace Sweetie_bot
                 }
             }
         }
-
+        
         public void Start()
         {
             pokeTimer.Elapsed += resetpokeState;
             pokeTimer.AutoReset = true;
             pokeTimer.Start();
+
+            if (File.Exists("./ponyroles_messages.txt"))
+            {
+                ponyRoles = JsonConvert.DeserializeObject < Dictionary < string, string>>
+                                    (File.ReadAllText("ponyroles_messages.txt"));
+            }
 
 
             censorshipManager = new CensorshipManager();
@@ -282,11 +305,16 @@ namespace Sweetie_bot
 
             _client = new DiscordClient();
 
+            _client.UsingAudio(x =>
+            {
+                x.Mode = AudioMode.Outgoing;
+            });
+
             _client.UsingCommands(x => {
                 x.PrefixChar = '!';
                 x.HelpMode = HelpMode.Private;
             });
-
+            
             _client.GetService<CommandService>().CreateCommand("EnableFilter")
                 .Description("Enables the profanity filter")
                 .Do(async e =>
@@ -320,6 +348,42 @@ namespace Sweetie_bot
                     }
                 });
 
+            
+            _client.GetService<CommandService>().CreateCommand("SongRequest")
+                .Parameter("SongUrl", ParameterType.Required)
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        string songUrl = e.GetArg("SongUrl");
+                        await Audio.Initialize(_client);
+                        Audio.Enque(songUrl);
+
+                        await e.Message.Delete();
+
+                        
+                        string title = "";
+                        string duration = "";
+                        if (songUrl.Contains("watch?v="))
+                        {
+                            System.Diagnostics.Process process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = "youtube-dl",
+                                Arguments = $"--skip-download --get-title --get-duration {songUrl}",
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true
+                            });
+
+                            string output = process.StandardOutput.ReadToEnd();
+                            string[] outputLines = output.Split('\n');
+                            title = outputLines[0];
+                            duration = outputLines[1];
+                        }
+                        await e.Channel.SendMessage("Song: " + title + " placed in song queue at #" + Audio.QueueCount() + "\rDuration: " + duration);
+                        
+                    }
+                });
+
 
 #if DEBUG
             _client.GetService<CommandService>().CreateCommand("test")
@@ -333,6 +397,35 @@ namespace Sweetie_bot
                 .Do(async e =>
                 {
                     await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
+                });
+
+            _client.GetService<CommandService>().CreateCommand("timeout")
+                .Parameter("TimeoutUser", ParameterType.Required)
+                .Parameter("TimeoutLength", ParameterType.Required)
+                .Do(async e =>
+                {
+                    if (HasManagerialRolePrerequisites(e))
+                    {
+                        Timer timeoutCounter = new Timer(double.Parse(e.GetArg("TimeoutLength")) * 1000);
+
+                        ulong userID = ulong.Parse(e.GetArg("TimeoutUser").Trim('<', '>', '@'));
+
+                        User user = e.Server.GetUser(userID);
+                        Console.Write(user.ToString());
+
+                        Role banRole = e.Server.GetRole(251120565358821376);
+
+                        await user.AddRoles(banRole);
+
+                        timeoutCounter.Elapsed += (sender, ev) => endTimeout(sender, ev, e, userID, banRole);
+                        timeoutCounter.Enabled = true;
+                        timeoutCounter.AutoReset = false;
+                        timeoutCounter.Start();
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("You are not a mod.");
+                    }
                 });
 
             _client.GetService<CommandService>().CreateCommand("PonyRoles")
@@ -376,6 +469,8 @@ namespace Sweetie_bot
                                         string ponymessage = message.Split(new string[] { "msg "}, StringSplitOptions.None)[1];
                                         ponyRoles[chosenPony] = ponymessage;
                                         await e.User.SendMessage(chosenPony.Split(PonyRolePrefix)[1] + " now says " + ponymessage + " the user.");
+                                        string json = JsonConvert.SerializeObject(ponyRoles);
+                                        File.WriteAllText("ponyroles_messages.txt", json);
                                     }
                                     else if (chosenPony.Equals(PonyRolePrefix + "None") || !e.User.HasRole(assignedRole[0]))
                                     {
@@ -550,8 +645,9 @@ namespace Sweetie_bot
 
                                 if (userProfanityCount[e.User.Name].Report)
                                     await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562> \rFuture messages from this user containing profanity will be automatically deleted.");
-                                
-                                await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+
+                                await e.User.SendMessage(profaneMessageResponses[count]);
+                                await e.User.SendMessage(outputMessage.Truncate(2000));
                             }
                         }
                     }
@@ -579,7 +675,8 @@ namespace Sweetie_bot
                                 if (userProfanityCount[e.User.Name].Report)
                                     await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562>");
 
-                                await e.User.SendMessage(profaneMessageResponses[count] + "\r" + outputMessage);
+                                await e.User.SendMessage(profaneMessageResponses[count]);
+                                await e.User.SendMessage(outputMessage.Truncate(2000));
                             }
                         }
                     }
