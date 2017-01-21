@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 
 
+
 namespace Sweetie_bot
 {
 
     using Discord;
     using Discord.Commands;
+    using Newtonsoft.Json;
     using System.IO;
-    using System.Threading.Tasks;
     using System.Timers;
+    
 
     public static class StringExt
     {
@@ -115,6 +117,13 @@ namespace Sweetie_bot
             pokeState = 0;
         }
 
+        private void endTimeout(object sender, ElapsedEventArgs e, CommandEventArgs ev, ulong userID, Role banrole)
+        {
+            Console.Write(string.Format("USER TIMEOUT EXPIRE: {0}", ev.Server.GetUser(userID).ToString()));
+            ev.Server.GetUser(userID).RemoveRoles(banrole);
+
+        }
+
         private static Timer pokeTimer = new Timer(60 * 1000);
 
         private DiscordClient _client;
@@ -193,7 +202,7 @@ namespace Sweetie_bot
         private static char PonyRolePrefix = '^';
 
         Dictionary<string, string> ponyRoles = new Dictionary<string, string>();
-        
+
         Dictionary<string, ProfanityCounter> userProfanityCount = new Dictionary<string, ProfanityCounter>();
 
         List<string> profaneMessageResponses = new List<string>(new string[]
@@ -284,6 +293,11 @@ namespace Sweetie_bot
             pokeTimer.AutoReset = true;
             pokeTimer.Start();
 
+            if (File.Exists("./ponyroles_messages.txt"))
+            {
+                ponyRoles = JsonConvert.DeserializeObject<Dictionary<string, string>>
+                                     (File.ReadAllText("ponyroles_messages.txt"));
+            }
 
             censorshipManager = new CensorshipManager();
             censorshipManager.Initialize();
@@ -386,6 +400,8 @@ namespace Sweetie_bot
                                         string ponymessage = message.Split(new string[] { "msg "}, StringSplitOptions.None)[1];
                                         ponyRoles[chosenPony] = ponymessage;
                                         await e.User.SendMessage(chosenPony.Split(PonyRolePrefix)[1] + " now says " + ponymessage + " the user.");
+                                        string json = JsonConvert.SerializeObject(ponyRoles);
+                                        File.WriteAllText("ponyroles_messages.txt", json);
                                     }
                                     else if (chosenPony.Equals(PonyRolePrefix + "None") || !e.User.HasRole(assignedRole[0]))
                                     {
