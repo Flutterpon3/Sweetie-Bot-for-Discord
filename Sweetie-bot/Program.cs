@@ -184,6 +184,7 @@ namespace Sweetie_bot
             "colt-x-female",
             "mlp-loli",
             "mlp-shota",
+            "roleplay",
             "mlp-loli-x-shota",
             "extreme-fetish-general",
             "extreme-fetish-loli-n-shota"
