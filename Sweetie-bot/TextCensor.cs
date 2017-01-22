@@ -79,11 +79,12 @@ namespace Sweetie_bot
             if (filthdrain.Length == 0) return quickfilter;
             string censoredMessage = Filter(RemoveNonAlphaNumericStar(stripped), alteredMessage, filthdrain);
             censoredMessage = RefillNonAlphaNumeric(censoredMessage, quickfilter);
+            stripped = RefillApostrophes(stripped, quickfilter);
             censoredMessage = Unfilter(censoredMessage, stripped, message);
 
             //float endTime = Time.realtimeSinceStartup;
             //Console.WriteLine((endTime - startTime) * 1000 + " ms");
-            
+
             return censoredMessage;
         }
 
@@ -178,15 +179,19 @@ namespace Sweetie_bot
             string[] words = message.ToLower().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             string quickfilter = message;
 
+            Dictionary<string, string> temp = new Dictionary<string, string>(words.Length);
             foreach (string word in words)
             {
-                string readword = word;
-                if (CensoredWords.ContainsKey(readword))
+                if (!temp.ContainsKey(word))
                 {
-                    string regularExpression = ToRegexPattern(readword);
+                    temp.Add(word, word);
+                    if (CensoredWords.ContainsKey(word))
+                    {
+                        string regularExpression = ToRegexPattern(word);
 
-                    quickfilter = Regex.Replace(quickfilter, regularExpression, StarCensoredMatch,
-                                                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                        quickfilter = Regex.Replace(quickfilter, regularExpression, StarCensoredMatch,
+                                              RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    }
                 }
             }
             return quickfilter;
@@ -194,11 +199,12 @@ namespace Sweetie_bot
 
         public string Filter(string text, string alteredText, string key)
         {
-            //string censoredText = text;
             string censoredText = alteredText;
             
             if (key.Length > 2)
             {
+                Dictionary<string, string> sets = new Dictionary<string, string>();
+
                 string alteredbadwords = CensoredWordsString;
                 int cap = 3;
                 //for (int i = 0; i < key.Length - cap; i += 3)
@@ -216,9 +222,13 @@ namespace Sweetie_bot
                         set += key[j];
                     //set += key[j - offset];
 
-                    string regularExpression = ToRegexPattern(set);
-                    alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatch,
-                                                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    if (!sets.ContainsKey(set))
+                    {
+                        sets.Add(set, set);
+                        string regularExpression = ToRegexPattern(set);
+                        alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatch,
+                                                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    }
                 }
                 string[] limitedBadWords = alteredbadwords.Split("?".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
@@ -237,7 +247,6 @@ namespace Sweetie_bot
                 }
             }
             
-            
             string resultText = "";
             for (int i = 0; i < alteredText.Length; ++i)
             {
@@ -253,8 +262,6 @@ namespace Sweetie_bot
             }
 
             return resultText;
-
-            //return censoredText;
         }
 
         string Unfilter(string censored, string unfilter, string original)
@@ -281,7 +288,7 @@ namespace Sweetie_bot
                 for (int i = 0; i < cleanDictText.Length; ++i)
                 {
                     char lower = char.ToLower(cleanDictText[i]);
-                    bool isalpha = isAlpha(lower);// || lower == '\'';
+                    bool isalpha = isAlpha(lower) || lower == '\'';
                     if (wordPlace < 3)
                     {
                         if (isalpha)
@@ -322,7 +329,7 @@ namespace Sweetie_bot
                             {
                                 string regularExpression = ToRegexPattern(word);
 
-                                cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatch,
+                                cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatchRemoveApostrophe,
                                                             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                             }
                         }
@@ -339,6 +346,16 @@ namespace Sweetie_bot
         {
             string word = m.Captures[0].Value;
             return new string('¢', word.Length);
+        }
+
+        private static string StarCensoredMatchRemoveApostrophe(Match m)
+        {
+            string word = m.Captures[0].Value;
+            string result = "";
+            for (int i = 0; i < word.Length; ++i)
+                if (word[i] != '\'')
+                    result += '¢';
+            return result;
         }
 
         private static string EmoteFilter(Match m)
@@ -455,6 +472,24 @@ namespace Sweetie_bot
                     if (condition1 && condition2)
                         refill = '¢';
                     */
+
+                    orig = part1 + refill + part2;
+                }
+            }
+
+            return orig;
+        }
+
+        public static string RefillApostrophes(string orig, string apostrophes)
+        {
+            for (int i = 0; i < apostrophes.Length; ++i)
+            {
+                if (apostrophes[i] == '\'')
+                {
+                    string part1 = orig.Substring(0, i);
+                    string part2 = orig.Substring(i, orig.Length - i);
+
+                    char refill = apostrophes[i];
 
                     orig = part1 + refill + part2;
                 }

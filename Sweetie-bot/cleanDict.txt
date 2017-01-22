@@ -13373,6 +13373,7 @@ cams
 camshaft
 camshafts
 can
+can't
 canaan
 canaanite
 canaanites
@@ -26384,6 +26385,7 @@ diddlers
 diddles
 diddling
 didies
+didn't
 dido
 didoes
 didos
@@ -36939,6 +36941,7 @@ flutterer
 flutterers
 fluttering
 flutters
+fluttershy
 fluttery
 fluty
 flux
@@ -43496,6 +43499,7 @@ haven
 havened
 havening
 havens
+haven't
 haver
 havers
 haversack
@@ -50690,6 +50694,7 @@ islets
 isling
 ism
 isms
+isn't
 isobar
 isobaric
 isobars
@@ -50773,6 +50778,7 @@ isthmus
 isthmuses
 istle
 it
+it's
 ital
 italian
 italians
@@ -108156,6 +108162,7 @@ wonting
 wonton
 wontons
 wonts
+won't
 woo
 wood
 woodbin
