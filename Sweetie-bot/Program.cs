@@ -349,7 +349,7 @@ namespace Sweetie_bot
                     }
                 });
 
-            
+            /* Commented out due to spotty functionality
             _client.GetService<CommandService>().CreateCommand("SongRequest")
                 .Parameter("SongUrl", ParameterType.Required)
                 .Do(async e =>
@@ -384,7 +384,7 @@ namespace Sweetie_bot
                         
                     }
                 });
-
+                */
 
 #if DEBUG
             _client.GetService<CommandService>().CreateCommand("test")
