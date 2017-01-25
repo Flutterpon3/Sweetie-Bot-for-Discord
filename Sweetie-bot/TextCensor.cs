@@ -8,9 +8,13 @@ namespace Sweetie_bot
 {
     public class Censor
     {
-        public Dictionary<string, string> CensoredWords { get; private set; }
-        public string CensoredWordsString { get; private set; }
-        public Dictionary<string, Dictionary<string, string>> Dictionary { get; private set; }
+        public static Dictionary<string, string> CensoredWords { get; private set; }
+        public static string CensoredWordsString { get; private set; }
+        public static List<int> CensoredWordsCharIndexes { get; private set; }
+        public static Dictionary<string, Dictionary<string, string>> Dictionary { get; private set; }
+
+        private static Dictionary<int, int> CensoredWordsIndexes { get; set; }
+        private static string HardFilterKey { get; set; }
 
         public Censor(Dictionary<string, string> censoredWords, Dictionary<string, Dictionary<string, string>> dictWords)
         {
@@ -21,8 +25,14 @@ namespace Sweetie_bot
                 throw new ArgumentNullException("dictWords");
 
             CensoredWords = censoredWords;
-            foreach (string word in CensoredWords.Keys)
+            CensoredWordsCharIndexes = new List<int>();
+            for (int i = 0; i < CensoredWords.Keys.Count; ++i)
+            {
+                string word = CensoredWords.Keys.ElementAt(i);
                 CensoredWordsString += word + "?";
+                CensoredWordsCharIndexes.AddRange(Enumerable.Repeat(i, word.Length + 1));
+            }
+            System.Diagnostics.Debug.WriteLine(CensoredWordsString.Length - CensoredWordsCharIndexes.Count);
             Dictionary = dictWords;
         }
 
@@ -134,7 +144,8 @@ namespace Sweetie_bot
             string underlined = "";
             for (int i = 0; i < words.Length; ++i)
             {
-                if (!filteredWords[i].Equals(words[i]))
+                if (filteredWords[i].Contains('¢') &&
+                    !filteredWords[i].Equals(words[i]))
                 {
                     words[i] = "__" + words[i] + "__";
                 }
@@ -151,7 +162,8 @@ namespace Sweetie_bot
             string underlined = "";
             for (int i = 0; i < words.Length; ++i)
             {
-                if (!filteredWords[i].Equals(words[i]))
+                if (filteredWords[i].Contains('¢') &&
+                    !filteredWords[i].Equals(words[i]))
                     words[i] = "__**" + words[i] + "**__";
                 underlined += words[i];
                 if (i != words.Length - 1) underlined += " ";
@@ -166,7 +178,8 @@ namespace Sweetie_bot
             string tears = "";
             for (int i = 0; i < words.Length; ++i)
             {
-                if (!filteredWords[i].Equals(words[i]))
+                if (filteredWords[i].Contains('¢') &&
+                    !filteredWords[i].Equals(words[i]))
                     words[i] = ":fluttercry:";
                 tears += words[i];
                 if (i != words.Length - 1) tears += " ";
@@ -203,12 +216,18 @@ namespace Sweetie_bot
             
             if (key.Length > 2)
             {
+                HardFilterKey = key;
+
+                System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+                watch.Start();
+
                 Dictionary<string, string> sets = new Dictionary<string, string>();
+                CensoredWordsIndexes = new Dictionary<int, int>();
 
                 string alteredbadwords = CensoredWordsString;
                 int cap = 3;
                 //for (int i = 0; i < key.Length - cap; i += 3)
-                for (int i = 0; i < Math.Max(key.Length - cap, 1); ++i)
+                for (int i = 0; i < Math.Max(key.Length - cap + 1, 1); ++i)
                 {
                     string set = "";
                     /*
@@ -226,25 +245,31 @@ namespace Sweetie_bot
                     {
                         sets.Add(set, set);
                         string regularExpression = ToRegexPattern(set);
-                        alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatch,
+                        alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatchProfanityIndex,
                                                         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                     }
                 }
-                string[] limitedBadWords = alteredbadwords.Split("?".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
-                for (int i = 0; i < CensoredWords.Count; ++i)
+                //CensoredWordsIndexes = CensoredWordsIndexes.OrderBy(x => CensoredWords.Keys.ElementAt(x.Key).Length - x.Value).ToDictionary(x => x.Key, x => x.Value);
+
+                for (int i = 0; i < CensoredWordsIndexes.Count; ++i)
                 {
-                    if (limitedBadWords[i].Contains('¢'))
-                    {
-                        string censoredWord = CensoredWords.Keys.ElementAt(i);
-                        if (!(censoredText.IndexOf(censoredWord, StringComparison.OrdinalIgnoreCase) >= 0)) continue;
+                    string censoredWord = CensoredWords.Keys.ElementAt(CensoredWordsIndexes.Keys.ElementAt(i));
+                    if (censoredWord.Length > HardFilterKey.Length) continue;
 
-                        string regularExpression = ToRegexPattern(censoredWord);
-                        censoredText = Regex.Replace(censoredText, regularExpression, StarCensoredMatch,
-                                                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    if (HardFilterKey.IndexOf(censoredWord, StringComparison.OrdinalIgnoreCase) < 0) continue;
 
-                    }
+                    string regularExpression = ToRegexPattern(censoredWord);
+
+                    string old = censoredText;
+                    censoredText = Regex.Replace(censoredText, regularExpression, StarCensoredMatch,
+                                                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    if (censoredText != old)
+                        HardFilterKey = HardFilterKey.Replace(censoredWord, string.Empty);
                 }
+
+                watch.Stop();
+                System.Diagnostics.Debug.WriteLine(watch.ElapsedMilliseconds);
             }
             
             string resultText = "";
@@ -281,7 +306,7 @@ namespace Sweetie_bot
             {
                 string lText = text.ToLower();
                 string cleanDictText = lText;
-                string currentDict = Dictionary.Keys.ElementAt(0);
+                string currentDict = "";
                 int wordPlace = 0;
                 Dictionary<string, Dictionary<string, string>> dicts = new Dictionary<string, Dictionary<string, string>>();
                 string wordString = "";
@@ -300,7 +325,7 @@ namespace Sweetie_bot
 
                     if (wordPlace == 3 || !isalpha || i == cleanDictText.Length - 1)
                     {
-                        if (!dicts.ContainsKey(currentDict) && currentDict.Length < 4)
+                        if (!dicts.ContainsKey(currentDict) && currentDict.Length < 4 && currentDict.Length > 1)
                             dicts.Add(currentDict, new Dictionary<string, string>());
                         wordPlace = 0;
                     }
@@ -319,33 +344,64 @@ namespace Sweetie_bot
                     }
                 }
                 
-                for (int i = 0; i < dicts.Count; ++i)
+                if (dicts.Count > 0)
                 {
-                    foreach (string word in dicts.Values.ElementAt(i).Keys)
+                    for (int i = 0; i < dicts.Count; ++i)
                     {
-                        if (Dictionary.ContainsKey(dicts.Keys.ElementAt(i)))
+                        KeyValuePair<string, Dictionary<string, string>> pair = dicts.ElementAt(i);
+                        if (pair.Value.Count > 1)
                         {
-                            if (Dictionary[dicts.Keys.ElementAt(i)].ContainsKey(word))
-                            {
-                                string regularExpression = ToRegexPattern(word);
+                            Dictionary<string, string> temp = pair.Value.Keys.OrderByDescending(x => x.Length).ToDictionary(x => x, x => x);
+                            dicts[pair.Key] = temp;
+                        }
+                    }
+                    dicts = dicts.OrderByDescending(x => x.Value.Last().Key.Length).ToDictionary(x => x.Key, x => x.Value);
 
-                                cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatchRemoveApostrophe,
-                                                            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    for (int i = 0; i < dicts.Count; ++i)
+                    {
+                        foreach (string word in dicts.Values.ElementAt(i).Keys)
+                        {
+                            if (Dictionary.ContainsKey(dicts.Keys.ElementAt(i)))
+                            {
+                                if (Dictionary[dicts.Keys.ElementAt(i)].ContainsKey(word))
+                                {
+                                    string regularExpression = ToRegexPattern(word);
+
+                                    cleanDictText = Regex.Replace(cleanDictText, regularExpression, StarCensoredMatchRemoveApostrophe,
+                                                                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                                }
                             }
                         }
                     }
                 }
+
                 return cleanDictText;
             }
             else return text;
         }
 
-
-
         private static string StarCensoredMatch(Match m)
         {
             string word = m.Captures[0].Value;
             return new string('¢', word.Length);
+        }
+
+        private static string StarCensoredMatchProfanityIndex(Match m)
+        {
+            int index = CensoredWordsCharIndexes[m.Index];
+            //string word = CensoredWords.Keys.ElementAt(index);
+
+            //if (word.Length <= HardFilterKey.Length)
+            //{
+                if (!CensoredWordsIndexes.ContainsKey(index))
+                    CensoredWordsIndexes.Add(index, 3);
+                else
+                    CensoredWordsIndexes[index] += 3;
+            //}
+
+            string match = m.Captures[0].Value;
+            return new string('¢', match.Length);
+            //return match;
         }
 
         private static string StarCensoredMatchRemoveApostrophe(Match m)
@@ -652,7 +708,7 @@ namespace Sweetie_bot
 
         public void ClearDuplicates()
         {
-            Dictionary<string, string> CensoredWords = censor.CensoredWords;
+            Dictionary<string, string> CensoredWords = Censor.CensoredWords;
             Dictionary<string, string> cleared = new Dictionary<string, string>();
             for (int i = 0; i < CensoredWords.Count; ++i)
             {
@@ -717,7 +773,7 @@ namespace Sweetie_bot
                 string word = dictionary[i];
                 if (word.Contains("*"))
                 {
-                    if (!censor.CensoredWords.ContainsKey(actualDictionary[i]))
+                    if (!Censor.CensoredWords.ContainsKey(actualDictionary[i]))
                         whitelist.Add(actualDictionary[i]);
                 }
             }
@@ -729,7 +785,7 @@ namespace Sweetie_bot
         public void WriteCleanDictionary()
         {
             ///*
-            Dictionary<string, string> CensoredWords = censor.CensoredWords;
+            Dictionary<string, string> CensoredWords = Censor.CensoredWords;
             
             StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "dictionary.txt");
             string dictstr = dict.ReadToEnd().ToLower();

@@ -663,11 +663,12 @@ namespace Sweetie_bot
                     {
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
-                            string filtered = censorshipManager.censor.CensorMessage(e.Message.Text);
-                            if (filtered != null && filtered != e.Message.Text)
+                            string message = e.Message.ToString().Remove(0, e.User.Name.Length + 2);
+                            string filtered = censorshipManager.censor.CensorMessage(message); // e.Message.Text);
+
+                            if (filtered != null && filtered != message) // e.Message.Text)
                             {
                                 int count = GetProfanityCount(e.User.Name);
-                                Console.WriteLine(e.Message.ToString());
                                 string outputMessage = GetOutputMessage(e.User.Name, count, e.Message.Text, filtered);
                                 
                                 if (userProfanityCount[e.User.Name].DeleteProfanity)
