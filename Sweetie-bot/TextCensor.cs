@@ -218,9 +218,6 @@ namespace Sweetie_bot
             {
                 HardFilterKey = key;
 
-                System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-                watch.Start();
-
                 Dictionary<string, string> sets = new Dictionary<string, string>();
                 CensoredWordsIndexes = new Dictionary<int, int>();
 
@@ -267,9 +264,6 @@ namespace Sweetie_bot
                     if (censoredText != old)
                         HardFilterKey = HardFilterKey.Replace(censoredWord, string.Empty);
                 }
-
-                watch.Stop();
-                System.Diagnostics.Debug.WriteLine(watch.ElapsedMilliseconds);
             }
             
             string resultText = "";
