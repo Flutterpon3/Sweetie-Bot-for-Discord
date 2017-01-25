@@ -25,6 +25,14 @@ namespace Sweetie_bot
                 throw new ArgumentNullException("dictWords");
 
             CensoredWords = censoredWords;
+            UpdateCensoredWords();
+
+            Dictionary = dictWords;
+        }
+
+        private void UpdateCensoredWords()
+        {
+            CensoredWordsString = "";
             CensoredWordsCharIndexes = new List<int>();
             for (int i = 0; i < CensoredWords.Keys.Count; ++i)
             {
@@ -32,8 +40,44 @@ namespace Sweetie_bot
                 CensoredWordsString += word + "?";
                 CensoredWordsCharIndexes.AddRange(Enumerable.Repeat(i, word.Length + 1));
             }
-            System.Diagnostics.Debug.WriteLine(CensoredWordsString.Length - CensoredWordsCharIndexes.Count);
-            Dictionary = dictWords;
+        }
+
+        public bool DictContains(string word)
+        {
+            string substring = word.Substring(0, Math.Min(word.Length, 3));
+            bool contains = false;
+            if (Dictionary.ContainsKey(substring))
+                contains = Dictionary[substring].ContainsKey(word);
+            return contains;
+        }
+
+        public void DictAdd(string word)
+        {
+            string substring = word.Substring(0, Math.Min(word.Length, 3));
+            Dictionary[substring].Add(word, word);
+        }
+
+        public void DictRemove(string word)
+        {
+            string substring = word.Substring(0, Math.Min(word.Length, 3));
+            Dictionary[substring].Remove(word);
+        }
+
+        public bool FilterContains(string word)
+        {
+            return CensoredWords.ContainsKey(word);
+        }
+
+        public void FilterAdd(string word)
+        {
+            CensoredWords.Add(word, word);
+            UpdateCensoredWords();
+        }
+
+        public void FilterRemove(string word)
+        {
+            CensoredWords.Remove(word);
+            UpdateCensoredWords();
         }
 
         public bool CensorCheck(string CheckString)
@@ -47,8 +91,7 @@ namespace Sweetie_bot
 
             return false;
         }
-
-
+        
         public string PureCensor(string censoredText)
         {
             if (censoredText == null)
@@ -618,7 +661,7 @@ namespace Sweetie_bot
         // Use this for initialization
         public void Initialize()
         {
-            StreamReader badwords = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "badwords.txt");
+            StreamReader badwords = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "filtering/badwords.txt");
             string str = badwords.ReadToEnd().ToLower();
             str = str.Replace(((char)13).ToString(), "");
             string[] filteredWords = str.Split('\n');
@@ -652,7 +695,7 @@ namespace Sweetie_bot
             }
             */
 
-            StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "cleanDict.txt");
+            StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "filtering/cleanDict.txt");
             string dictstr = dict.ReadToEnd().ToLower();
             dictstr = dictstr.Replace(((char)13).ToString(), "");
             string[] dictionary = dictstr.Split('\n');
@@ -698,6 +741,53 @@ namespace Sweetie_bot
             }
             
             censor = new Censor(censoredWords, dividedDict);
+        }
+
+        public bool DictContains(string word)
+        {
+            return censor.DictContains(word);
+        }
+
+        public void DictAdd(string word)
+        {
+            censor.DictAdd(word);
+        }
+
+        public void DictRemove(string word)
+        {
+            censor.DictRemove(word);
+        }
+
+        public void UpdateDictionary()
+        {
+            List<string> cleanDict = new List<string>();
+            foreach (string key in Censor.Dictionary.Keys)
+            {
+                Dictionary<string, string> subDict = Censor.Dictionary[key];
+                cleanDict.AddRange(subDict.Keys);
+            }
+            File.WriteAllLines("filtering/cleanDict.txt", cleanDict.ToArray());
+        }
+
+        public bool FilterContains(string word)
+        {
+            return censor.FilterContains(word);
+        }
+
+        public void FilterAdd(string word)
+        {
+            censor.FilterAdd(word);
+        }
+
+        public void FilterRemove(string word)
+        {
+            censor.FilterRemove(word);
+        }
+
+        public void UpdateFilter()
+        {
+            string[] badwords = Censor.CensoredWords.Keys.ToArray();
+            File.WriteAllLines("filtering/badwords.txt", badwords);
         }
 
         public void ClearDuplicates()
@@ -751,7 +841,7 @@ namespace Sweetie_bot
         public void WriteWhiteList()
         {
             ///*
-            StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "dictionary.txt");
+            StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "filtering/dictionary.txt");
             string dictstr = dict.ReadToEnd().ToLower();
 
             dictstr = dictstr.Replace(((char)13).ToString(), "");
@@ -781,7 +871,7 @@ namespace Sweetie_bot
             ///*
             Dictionary<string, string> CensoredWords = Censor.CensoredWords;
             
-            StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "dictionary.txt");
+            StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "filtering/dictionary.txt");
             string dictstr = dict.ReadToEnd().ToLower();
             char[] splitStr = new char[] { (char)13, '\n' };
             string[] dictionary = dictstr.Split(splitStr);

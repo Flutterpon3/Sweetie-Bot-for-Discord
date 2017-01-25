@@ -256,6 +256,14 @@ namespace Sweetie_bot
                 (technicianRole.Length > 0 && e.User.HasRole(technicianRole[0]));
         }
 
+        bool HasManagerialRolePrerequisites(MessageEventArgs e)
+        {
+            Role[] managerRole = e.Server.FindRoles("Club Room Manager").ToArray();
+            Role[] technicianRole = e.Server.FindRoles("Sweetie-Bot Technician").ToArray();
+            return (managerRole.Length > 0 && e.User.HasRole(managerRole[0])) ||
+                (technicianRole.Length > 0 && e.User.HasRole(technicianRole[0]));
+        }
+
         private void PonyRolesUpdate(Server server)
         {
             Role[] serverRoles = server.Roles.ToArray();
@@ -346,6 +354,92 @@ namespace Sweetie_bot
                         {
                             await e.User.SendMessage("You do not have permission to use that command.");
                         }
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("Dictionary")
+                .Parameter("AddRemove", ParameterType.Required)
+                .Parameter("Message", ParameterType.Unparsed)
+                .Description("Add or remove word from dictionary.")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (HasManagerialRolePrerequisites(e))
+                        {
+                            string AR = e.GetArg("AddRemove").ToLower();
+                            string message = "";
+                            bool changed = false;
+
+                            if (AR == "add")
+                            {
+                                message = e.GetArg("Message").ToLower();
+                                if (!censorshipManager.DictContains(message))
+                                {
+                                    censorshipManager.DictAdd(message);
+                                    await e.Channel.SendMessage(message + " added to dictionary!");
+                                    changed = true;
+                                }
+                                else await e.Channel.SendMessage(message + " is already in the dictionary.");
+                            }
+                            else if (AR == "remove")
+                            {
+                                message = e.GetArg("Message").ToLower();
+                                if (censorshipManager.DictContains(message))
+                                {
+                                    censorshipManager.DictRemove(message);
+                                    await e.Channel.SendMessage(message + " removed from dictionary!");
+                                    changed = true;
+                                }
+                                else await e.Channel.SendMessage(message + " isn't in the dictionary.");
+                            }
+                            
+                            if (changed) censorshipManager.UpdateDictionary();
+                        }
+                        else await e.User.SendMessage("You do not have permission to use that command.");
+                    }
+                });
+
+            _client.GetService<CommandService>().CreateCommand("Filter")
+                .Parameter("AddRemove", ParameterType.Required)
+                .Parameter("Message", ParameterType.Unparsed)
+                .Description("Add or remove word from profanity list.")
+                .Do(async e =>
+                {
+                    if (!e.Message.Channel.IsPrivate)
+                    {
+                        if (HasManagerialRolePrerequisites(e))
+                        {
+                            string AR = e.GetArg("AddRemove").ToLower();
+                            string message = "";
+                            bool changed = false;
+
+                            if (AR == "add")
+                            {
+                                message = e.GetArg("Message").ToLower();
+                                if (!censorshipManager.FilterContains(message))
+                                {
+                                    censorshipManager.FilterAdd(message);
+                                    await e.Channel.SendMessage(message + " added to profanity list!");
+                                    changed = true;
+                                }
+                                else await e.Channel.SendMessage(message + " is already in the profanity list.");
+                            }
+                            else if (AR == "remove")
+                            {
+                                message = e.GetArg("Message").ToLower();
+                                if (censorshipManager.FilterContains(message))
+                                {
+                                    censorshipManager.FilterRemove(message);
+                                    await e.Channel.SendMessage(message + " removed from profanity list!");
+                                    changed = true;
+                                }
+                                else await e.Channel.SendMessage(message + " isn't in the profanity list.");
+                            }
+
+                            if (changed) censorshipManager.UpdateFilter();
+                        }
+                        else await e.User.SendMessage("You do not have permission to use that command.");
                     }
                 });
 
@@ -635,8 +729,10 @@ namespace Sweetie_bot
                     {
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
-                            string filtered = censorshipManager.censor.CensorMessage(e.After.Text);
-                            if (filtered != null && filtered != e.After.Text)
+                            string message = e.After.ToString().Remove(0, e.User.Name.Length + 2);
+                            string filtered = censorshipManager.censor.CensorMessage(message); // e.After.Text);
+
+                            if (filtered != null && filtered != message) // e.After.Text)
                             {
                                 int count = GetProfanityCount(e.User.Name);
                                 string outputMessage = GetOutputMessage(e.User.Name, count, e.After.Text, filtered);
@@ -661,7 +757,10 @@ namespace Sweetie_bot
                 {
                     if (filterEnabled && !e.Channel.IsPrivate)
                     {
-                        if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
+                        bool manager = HasManagerialRolePrerequisites(e);
+                        bool dictionaryCommand = e.Message.Text.StartsWith("!dictionary", StringComparison.OrdinalIgnoreCase) && manager;
+                        bool filterCommand = e.Message.Text.StartsWith("!filter", StringComparison.OrdinalIgnoreCase) && manager;
+                        if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only" && !dictionaryCommand && !filterCommand)
                         {
                             string message = e.Message.ToString().Remove(0, e.User.Name.Length + 2);
                             string filtered = censorshipManager.censor.CensorMessage(message); // e.Message.Text);
