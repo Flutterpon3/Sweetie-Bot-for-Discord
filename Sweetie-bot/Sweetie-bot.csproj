@@ -152,8 +152,12 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy  "$(ProjectDir)opus.dll" "$(TargetDir)
-copy "$(ProjectDir)libsodium.dll" "$(TargetDir)</PostBuildEvent>
+    <PostBuildEvent>if not exist "$(TargetDir)songs" mkdir "$(TargetDir)songs"
+if not exist "$(TargetDir)filtering" mkdir "$(TargetDir)filtering"
+copy  "$(ProjectDir)opus.dll" "$(TargetDir)"
+copy "$(ProjectDir)libsodium.dll" "$(TargetDir)"
+copy  "$(ProjectDir)default_cleanDict.txt" "$(TargetDir)/filtering"
+copy  "$(ProjectDir)default_badWords.txt" "$(TargetDir)/filtering"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

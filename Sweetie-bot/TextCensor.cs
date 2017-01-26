@@ -661,7 +661,9 @@ namespace Sweetie_bot
         // Use this for initialization
         public void Initialize()
         {
-            StreamReader badwords = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "filtering/badwords.txt");
+            string filterDir = "./filtering/";
+            if (!File.Exists(filterDir + "badWords.txt")){ File.Copy(filterDir + "default_badWords.txt", filterDir + "badWords.txt"); }
+            StreamReader badwords = new StreamReader(filterDir + "badWords.txt");
             string str = badwords.ReadToEnd().ToLower();
             str = str.Replace(((char)13).ToString(), "");
             string[] filteredWords = str.Split('\n');
@@ -695,7 +697,8 @@ namespace Sweetie_bot
             }
             */
 
-            StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "filtering/cleanDict.txt");
+            if (!File.Exists(filterDir + "cleanDict.txt")) { File.Copy(filterDir + "default_cleanDict.txt", filterDir + "cleanDict.txt"); }
+            StreamReader dict = new StreamReader(filterDir + "cleanDict.txt");
             string dictstr = dict.ReadToEnd().ToLower();
             dictstr = dictstr.Replace(((char)13).ToString(), "");
             string[] dictionary = dictstr.Split('\n');
