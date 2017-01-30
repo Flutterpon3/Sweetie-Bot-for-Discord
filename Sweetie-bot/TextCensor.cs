@@ -15,6 +15,11 @@ namespace Sweetie_bot
 
         private static Dictionary<int, int> CensoredWordsIndexes { get; set; }
         private static string HardFilterKey { get; set; }
+        
+        public void SortCensoredWords()
+        {
+            CensoredWords = CensoredWords.Keys.OrderByDescending(x => x.Length).ToDictionary(x => x, x => x);
+        }
 
         public Censor(Dictionary<string, string> censoredWords, Dictionary<string, Dictionary<string, string>> dictWords)
         {
@@ -42,25 +47,31 @@ namespace Sweetie_bot
             }
         }
 
-        public bool DictContains(string word)
+        public bool DictContainsSub(string substring)
         {
-            string substring = word.Substring(0, Math.Min(word.Length, 3));
-            bool contains = false;
-            if (Dictionary.ContainsKey(substring))
-                contains = Dictionary[substring].ContainsKey(word);
-            return contains;
+            return Dictionary.ContainsKey(substring);
         }
 
-        public void DictAdd(string word)
+        public bool DictContains(string word, string substring)
         {
-            string substring = word.Substring(0, Math.Min(word.Length, 3));
+            return Dictionary[substring].ContainsKey(word);
+        }
+
+        public void DictAddSub(string substring)
+        {
+            Dictionary.Add(substring, new Dictionary<string, string>());
+        }
+
+        public void DictAdd(string word, string substring)
+        {
             Dictionary[substring].Add(word, word);
         }
 
-        public void DictRemove(string word)
+        public void DictRemove(string word, string substring)
         {
-            string substring = word.Substring(0, Math.Min(word.Length, 3));
             Dictionary[substring].Remove(word);
+            if (Dictionary[substring].Count == 0)
+                Dictionary.Remove(substring);
         }
 
         public bool FilterContains(string word)
@@ -71,12 +82,14 @@ namespace Sweetie_bot
         public void FilterAdd(string word)
         {
             CensoredWords.Add(word, word);
+            SortCensoredWords();
             UpdateCensoredWords();
         }
 
         public void FilterRemove(string word)
         {
             CensoredWords.Remove(word);
+            SortCensoredWords();
             UpdateCensoredWords();
         }
 
@@ -746,19 +759,29 @@ namespace Sweetie_bot
             censor = new Censor(censoredWords, dividedDict);
         }
 
-        public bool DictContains(string word)
+        public bool DictContains(string word, string substring)
         {
-            return censor.DictContains(word);
+            return censor.DictContains(word, substring);
         }
 
-        public void DictAdd(string word)
+        public bool DictContainsSub(string substring)
         {
-            censor.DictAdd(word);
+            return censor.DictContainsSub(substring);
         }
 
-        public void DictRemove(string word)
+        public void DictAdd(string word, string substring)
         {
-            censor.DictRemove(word);
+            censor.DictAdd(word, substring);
+        }
+
+        public void DictAddSub(string substring)
+        {
+            censor.DictAddSub(substring);
+        }
+
+        public void DictRemove(string word, string substring)
+        {
+            censor.DictRemove(word, substring);
         }
 
         public void UpdateDictionary()

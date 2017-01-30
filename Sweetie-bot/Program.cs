@@ -374,24 +374,38 @@ namespace Sweetie_bot
                             if (AR == "add")
                             {
                                 message = e.GetArg("Message").ToLower();
-                                if (!censorshipManager.DictContains(message))
+                                if (message.Length > 1)
                                 {
-                                    censorshipManager.DictAdd(message);
-                                    await e.Channel.SendMessage(message + " added to dictionary!");
-                                    changed = true;
+                                    string substring = message.Substring(0, Math.Min(message.Length, 3));
+                                    if (!censorshipManager.DictContainsSub(substring))
+                                        censorshipManager.DictAddSub(substring);
+
+                                    if (!censorshipManager.DictContains(message, substring))
+                                    {
+                                        censorshipManager.DictAdd(message, substring);
+                                        await e.Channel.SendMessage(message + " added to dictionary!");
+                                        changed = true;
+                                    }
+                                    else await e.Channel.SendMessage(message + " is already in the dictionary.");
                                 }
-                                else await e.Channel.SendMessage(message + " is already in the dictionary.");
+                                else await e.Channel.SendMessage(message + " is not a long enough word.");
                             }
                             else if (AR == "remove")
                             {
                                 message = e.GetArg("Message").ToLower();
-                                if (censorshipManager.DictContains(message))
+                                if (message.Length > 1)
                                 {
-                                    censorshipManager.DictRemove(message);
-                                    await e.Channel.SendMessage(message + " removed from dictionary!");
-                                    changed = true;
+                                    string substring = message.Substring(0, Math.Min(message.Length, 3));
+                                    if (censorshipManager.DictContainsSub(substring) &&
+                                        censorshipManager.DictContains(message, substring))
+                                    {
+                                        censorshipManager.DictRemove(message, substring);
+                                        await e.Channel.SendMessage(message + " removed from dictionary!");
+                                        changed = true;
+                                    }
+                                    else await e.Channel.SendMessage(message + " isn't in the dictionary.");
                                 }
-                                else await e.Channel.SendMessage(message + " isn't in the dictionary.");
+                                else await e.Channel.SendMessage(message + " is not a long enough word.");
                             }
                             
                             if (changed) censorshipManager.UpdateDictionary();
@@ -416,25 +430,33 @@ namespace Sweetie_bot
 
                             if (AR == "add")
                             {
-                                message = e.GetArg("Message").ToLower();
-                                if (!censorshipManager.FilterContains(message))
+                                if (message.Length > 2)
                                 {
-                                    censorshipManager.FilterAdd(message);
-                                    await e.Channel.SendMessage(message + " added to profanity list!");
-                                    changed = true;
+                                    message = e.GetArg("Message").ToLower();
+                                    if (!censorshipManager.FilterContains(message))
+                                    {
+                                        censorshipManager.FilterAdd(message);
+                                        await e.Channel.SendMessage(message + " added to profanity list!");
+                                        changed = true;
+                                    }
+                                    else await e.Channel.SendMessage(message + " is already in the profanity list.");
                                 }
-                                else await e.Channel.SendMessage(message + " is already in the profanity list.");
+                                else await e.Channel.SendMessage(message + " is not a long enough word.");
                             }
                             else if (AR == "remove")
                             {
-                                message = e.GetArg("Message").ToLower();
-                                if (censorshipManager.FilterContains(message))
+                                if (message.Length > 2)
                                 {
-                                    censorshipManager.FilterRemove(message);
-                                    await e.Channel.SendMessage(message + " removed from profanity list!");
-                                    changed = true;
+                                    message = e.GetArg("Message").ToLower();
+                                    if (censorshipManager.FilterContains(message))
+                                    {
+                                        censorshipManager.FilterRemove(message);
+                                        await e.Channel.SendMessage(message + " removed from profanity list!");
+                                        changed = true;
+                                    }
+                                    else await e.Channel.SendMessage(message + " isn't in the profanity list.");
                                 }
-                                else await e.Channel.SendMessage(message + " isn't in the profanity list.");
+                                else await e.Channel.SendMessage(message + " is not a long enough word.");
                             }
 
                             if (changed) censorshipManager.UpdateFilter();
@@ -730,9 +752,9 @@ namespace Sweetie_bot
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only")
                         {
                             string message = e.After.ToString().Remove(0, e.User.Name.Length + 2);
-                            string filtered = censorshipManager.censor.CensorMessage(message); // e.After.Text);
+                            string filtered = censorshipManager.censor.CensorMessage(message);
 
-                            if (filtered != null && filtered != message) // e.After.Text)
+                            if (filtered != null && filtered != message)
                             {
                                 int count = GetProfanityCount(e.User.Name);
                                 string outputMessage = GetOutputMessage(e.User.Name, count, e.After.Text, filtered);
@@ -763,9 +785,9 @@ namespace Sweetie_bot
                         if (!nsfwChannels.Contains(e.Channel.Name) && e.Channel.Name != "staff-eyes-only" && !dictionaryCommand && !filterCommand)
                         {
                             string message = e.Message.ToString().Remove(0, e.User.Name.Length + 2);
-                            string filtered = censorshipManager.censor.CensorMessage(message); // e.Message.Text);
+                            string filtered = censorshipManager.censor.CensorMessage(message);
 
-                            if (filtered != null && filtered != message) // e.Message.Text)
+                            if (filtered != null && filtered != message)
                             {
                                 int count = GetProfanityCount(e.User.Name);
                                 string outputMessage = GetOutputMessage(e.User.Name, count, e.Message.Text, filtered);
