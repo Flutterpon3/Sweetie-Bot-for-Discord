@@ -430,9 +430,9 @@ namespace Sweetie_bot
 
                             if (AR == "add")
                             {
+                                message = e.GetArg("Message").ToLower();
                                 if (message.Length > 2)
                                 {
-                                    message = e.GetArg("Message").ToLower();
                                     if (!censorshipManager.FilterContains(message))
                                     {
                                         censorshipManager.FilterAdd(message);
@@ -445,9 +445,9 @@ namespace Sweetie_bot
                             }
                             else if (AR == "remove")
                             {
+                                message = e.GetArg("Message").ToLower();
                                 if (message.Length > 2)
                                 {
-                                    message = e.GetArg("Message").ToLower();
                                     if (censorshipManager.FilterContains(message))
                                     {
                                         censorshipManager.FilterRemove(message);
