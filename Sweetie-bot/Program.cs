@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 
-
-
 namespace Sweetie_bot
 {
 
@@ -648,7 +646,41 @@ namespace Sweetie_bot
                         else await e.Channel.SendMessage("You need a role first.");
                     }
                 });
-            
+
+            _client.GetService<CommandService>().CreateCommand("roll")
+                .Description("Roll any number of dice with xdy notation.")
+                .Parameter("Dies", ParameterType.Multiple)
+                .Do(async e =>
+                {
+                    await e.Message.Delete();
+                    string message = String.Format("{0} rolled: ", e.User.Name.ToString());
+                    for (int i = 0; i < e.Args.Count(); i++)
+                    {
+                        string die =  e.GetArg(i);
+                        int dieCount, dieSize;
+                        bool countSuccess = int.TryParse(die.Split('d')[0], out dieCount);
+                        bool sizeSuccess = int.TryParse(die.Split('d')[1], out dieSize);
+                        if (countSuccess && sizeSuccess)
+                        {
+                            int singleRoll;
+                            message = message + String.Format("{0}: ", e.GetArg(i));
+                            Random rand = new Random();
+                            int roll = 0;
+                            for (int d = 1; d < dieCount; d++)
+                            {
+                                singleRoll = (rand.Next() % dieSize) + 1;
+                                roll += singleRoll;
+                                message = message + String.Format("{0} + ", singleRoll);
+                            }
+
+                            singleRoll = (rand.Next() % dieSize) + 1;
+                            roll += singleRoll;
+                            message = message + String.Format("{0} = ", singleRoll);
+                            message = message + String.Format("{0} ", roll);
+                        }
+                    }
+                    await e.Channel.SendMessage(message);
+                });
 
             _client.GetService<CommandService>().CreateCommand("poke")
                 .Description("Does... Somthing. <:raritywink:250101117055139840>")
