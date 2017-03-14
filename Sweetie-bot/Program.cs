@@ -49,7 +49,7 @@ namespace Sweetie_bot
             canReport = false;
             profanityDeletion = false;
             profanityTimer = new Timer(60 * 60000);
-            profanityTimer.Elapsed += sub;
+            profanityTimer.Elapsed += Sub;
             profanityTimer.AutoReset = true;
             profanityTimer.Start();
         }
@@ -61,7 +61,7 @@ namespace Sweetie_bot
             profanityTimer = null;
         }
 
-        public int add()
+        public int Add()
         {
             count++;
 
@@ -79,7 +79,7 @@ namespace Sweetie_bot
             return Math.Min(count, 6);
         }
 
-        private void sub(Object source, ElapsedEventArgs e)
+        private void Sub(Object source, ElapsedEventArgs e)
         {
             if (profanityDeletion)
             {
@@ -111,18 +111,18 @@ namespace Sweetie_bot
 
         static bool filterEnabled = true;
 
-        private void resetpokeState(Object source, ElapsedEventArgs e)
+        private void ResetpokeState(Object source, ElapsedEventArgs e)
         {
             pokeState = 0;
         }
 
-        private void endTimeout(object sender, ElapsedEventArgs e, CommandEventArgs ev, ulong userID, Role banrole)
+        private static Timer pokeTimer = new Timer(60 * 1000);
+
+        private void EndTimeout(object sender, ElapsedEventArgs e, CommandEventArgs ev, ulong userID, Role banrole)
         {
             Console.Write(string.Format("USER TIMEOUT EXPIRE: {0}", ev.Server.GetUser(userID).ToString()));
             ev.Server.GetUser(userID).RemoveRoles(banrole);
         }
-
-        private static Timer pokeTimer = new Timer(60 * 1000);
 
         private DiscordClient _client = null;
 
@@ -183,8 +183,8 @@ namespace Sweetie_bot
             "general-nsfw",
             "non-mlp-young",
             "filly-only",
-            "filly-x-colt",
-            "colt-x-only",
+            "filly-colt",
+            "colt-only",
             "filly-x-male",
             "filly-x-female",
             "colt-x-male",
@@ -220,7 +220,7 @@ namespace Sweetie_bot
             if (!userProfanityCount.ContainsKey(name))
                 userProfanityCount.Add(name, new ProfanityCounter());
             else
-                count = userProfanityCount[name].add();
+                count = userProfanityCount[name].Add();
             return count;
         }
 
@@ -295,7 +295,7 @@ namespace Sweetie_bot
         
         public void Start()
         {
-            pokeTimer.Elapsed += resetpokeState;
+            pokeTimer.Elapsed += ResetpokeState;
             pokeTimer.AutoReset = true;
             pokeTimer.Start();
 
@@ -511,7 +511,12 @@ namespace Sweetie_bot
                 .Description("Display the server rules.")
                 .Do(async e =>
                 {
-                    await e.Channel.SendMessage("General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n- No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable. \n- Listen to the Club Room Managers\n- Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
+                    await e.Channel.SendMessage(
+                        "General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n" +
+                        "- No child model shots, like provocative poses, swimsuits, or underwear." +
+                        " Nothing against it, but it's not what this server is about and makes some uncomfortable. \n" +
+                        "- Listen to the Club Room Managers\n-" +
+                        " Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
 
             _client.GetService<CommandService>().CreateCommand("timeout")
@@ -532,7 +537,7 @@ namespace Sweetie_bot
 
                         await user.AddRoles(banRole);
 
-                        timeoutCounter.Elapsed += (sender, ev) => endTimeout(sender, ev, e, userID, banRole);
+                        timeoutCounter.Elapsed += (sender, ev) => EndTimeout(sender, ev, e, userID, banRole);
                         timeoutCounter.Enabled = true;
                         timeoutCounter.AutoReset = false;
                         timeoutCounter.Start();
@@ -657,9 +662,8 @@ namespace Sweetie_bot
                     for (int i = 0; i < e.Args.Count(); i++)
                     {
                         string die =  e.GetArg(i);
-                        int dieCount, dieSize;
-                        bool countSuccess = int.TryParse(die.Split('d')[0], out dieCount);
-                        bool sizeSuccess = int.TryParse(die.Split('d')[1], out dieSize);
+                        bool countSuccess = int.TryParse(die.Split('d')[0], out int dieCount);
+                        bool sizeSuccess = int.TryParse(die.Split('d')[1], out int dieSize);
                         if (countSuccess && sizeSuccess)
                         {
                             int singleRoll;
@@ -795,7 +799,9 @@ namespace Sweetie_bot
                                     await e.After.Delete();
 
                                 if (userProfanityCount[e.User.Name].Report)
-                                    await e.Channel.SendMessage(e.User.Name + " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562> \rFuture messages from this user containing profanity will be automatically deleted.");
+                                    await e.Channel.SendMessage(e.User.Name + 
+                                        " made Fluttershy cry from excessive use of profanity! <:fluttercry:250101114140098562> \r" +
+                                        "Future messages from this user containing profanity will be automatically deleted.");
 
                                 await e.User.SendMessage(profaneMessageResponses[count]);
                                 await e.User.SendMessage(outputMessage.Truncate(2000));
@@ -891,7 +897,8 @@ namespace Sweetie_bot
                 System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("(Don't lie, if it is revealed that you confirmed your age falsely, you could get banned.)");
                 System.Threading.Thread.Sleep(500);
-                await e.User.SendMessage("I can't tell you everything I can do right now, that would take up too much space! Type '!rules' to get the server rules at anytime, and '!help' to find out all the other stuff I can do.");
+                await e.User.SendMessage("I can't tell you everything I can do right now, that would take up too much space!" +
+                    " Type '!rules' to get the server rules at anytime, and '!help' to find out all the other stuff I can do.");
                 System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("I hope you have a fun time here!");
             };

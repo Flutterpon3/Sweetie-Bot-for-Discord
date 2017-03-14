@@ -63,8 +63,7 @@ namespace Sweetie_bot
                 if (_nextSong)
                 {
                     _nextSong = false;
-                    string songUrl;
-                    if (_songQueue.TryDequeue(out songUrl))
+                    if (_songQueue.TryDequeue(out string songUrl))
 #pragma warning disable CS4014 // not awaited to because of infiniant loop call.
                         SendAudio(songUrl);
 #pragma warning restore CS4014 
