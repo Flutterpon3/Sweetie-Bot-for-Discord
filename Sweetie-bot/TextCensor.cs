@@ -8,96 +8,28 @@ namespace Sweetie_bot
 {
     public class Censor
     {
-        public static Dictionary<string, string> CensoredWords { get; private set; }
-        public static string CensoredWordsString { get; private set; }
-        public static List<int> CensoredWordsCharIndexes { get; private set; }
-        public static Dictionary<string, Dictionary<string, string>> Dictionary { get; private set; }
+        public HashSet<string> CensoredWords { get; private set; }
+        public Dictionary<string, HashSet<string>> WordDictionary { get; private set; }
 
-        private static Dictionary<int, int> CensoredWordsIndexes { get; set; }
-        private static string HardFilterKey { get; set; }
-        
-        public void SortCensoredWords()
+        public Censor(HashSet<string> censoredWords, Dictionary<string, HashSet<string>> dictWords)
         {
-            CensoredWords = CensoredWords.Keys.OrderByDescending(x => x.Length).ToDictionary(x => x, x => x);
-        }
+            CensoredWords = censoredWords ?? throw new ArgumentNullException("censoredWords");
 
-        public Censor(Dictionary<string, string> censoredWords, Dictionary<string, Dictionary<string, string>> dictWords)
-        {
-            if (censoredWords == null)
-                throw new ArgumentNullException("censoredWords");
-
-            if (dictWords == null)
-                throw new ArgumentNullException("dictWords");
-
-            CensoredWords = censoredWords;
-            UpdateCensoredWords();
-
-            Dictionary = dictWords;
-        }
-
-        private void UpdateCensoredWords()
-        {
-            CensoredWordsString = "";
-            CensoredWordsCharIndexes = new List<int>();
-            for (int i = 0; i < CensoredWords.Keys.Count; ++i)
-            {
-                string word = CensoredWords.Keys.ElementAt(i);
-                CensoredWordsString += word + "?";
-                CensoredWordsCharIndexes.AddRange(Enumerable.Repeat(i, word.Length + 1));
-            }
-        }
-
-        public bool DictContainsSub(string substring)
-        {
-            return Dictionary.ContainsKey(substring);
-        }
-
-        public bool DictContains(string word, string substring)
-        {
-            return Dictionary[substring].ContainsKey(word);
-        }
-
-        public void DictAddSub(string substring)
-        {
-            Dictionary.Add(substring, new Dictionary<string, string>());
-        }
-
-        public void DictAdd(string word, string substring)
-        {
-            Dictionary[substring].Add(word, word);
+            WordDictionary = dictWords ?? throw new ArgumentNullException("dictWords");
         }
 
         public void DictRemove(string word, string substring)
         {
-            Dictionary[substring].Remove(word);
-            if (Dictionary[substring].Count == 0)
-                Dictionary.Remove(substring);
-        }
-
-        public bool FilterContains(string word)
-        {
-            return CensoredWords.ContainsKey(word);
-        }
-
-        public void FilterAdd(string word)
-        {
-            CensoredWords.Add(word, word);
-            SortCensoredWords();
-            UpdateCensoredWords();
-        }
-
-        public void FilterRemove(string word)
-        {
-            CensoredWords.Remove(word);
-            SortCensoredWords();
-            UpdateCensoredWords();
+            WordDictionary[substring].Remove(word);
+            if (WordDictionary[substring].Count == 0)
+                WordDictionary.Remove(substring);
         }
 
         public bool CensorCheck(string CheckString)
         {
             foreach(string word in CheckString.Split(' ').ToArray())
             {
-                if (CensoredWords.ContainsKey(word.ToLower())){
+                if (CensoredWords.Contains(word.ToLower())){
                     return true;
                 }
             }
@@ -110,7 +42,7 @@ namespace Sweetie_bot
             if (censoredText == null)
                 throw new ArgumentNullException("censoredText");
 
-            foreach (string censoredWord in CensoredWords.Values)
+            foreach (string censoredWord in CensoredWords)
             {
                 string regularExpression = ToRegexPatternBordered(censoredWord);
                 censoredText = Regex.Replace(censoredText, regularExpression, StarCensoredMatch,
@@ -248,13 +180,13 @@ namespace Sweetie_bot
             string[] words = message.ToLower().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             string quickfilter = message;
 
-            Dictionary<string, string> temp = new Dictionary<string, string>(words.Length);
+            HashSet<string> temp = new HashSet<string>();
             foreach (string word in words)
             {
-                if (!temp.ContainsKey(word))
+                if (!temp.Contains(word))
                 {
-                    temp.Add(word, word);
-                    if (CensoredWords.ContainsKey(word))
+                    temp.Add(word);
+                    if (CensoredWords.Contains(word))
                     {
                         string regularExpression = ToRegexPattern(word);
 
@@ -272,45 +204,14 @@ namespace Sweetie_bot
             
             if (key.Length > 2)
             {
-                HardFilterKey = key;
-
-                Dictionary<string, string> sets = new Dictionary<string, string>();
-                CensoredWordsIndexes = new Dictionary<int, int>();
-
-                string alteredbadwords = CensoredWordsString;
-                int cap = 3;
-                //for (int i = 0; i < key.Length - cap; i += 3)
-                for (int i = 0; i < Math.Max(key.Length - cap + 1, 1); ++i)
-                {
-                    string set = "";
-                    /*
-                    int limit = key.Length - i;
-                    if (limit > cap) limit = cap;
-
-                    int offset = 0;
-                    if (limit < cap) offset = cap - limit;
-                    */
-                    for (int j = i; j < Math.Min(cap + i, key.Length); ++j)
-                        set += key[j];
-                    //set += key[j - offset];
-
-                    if (!sets.ContainsKey(set))
-                    {
-                        sets.Add(set, set);
-                        string regularExpression = ToRegexPattern(set);
-                        alteredbadwords = Regex.Replace(alteredbadwords, regularExpression, StarCensoredMatchProfanityIndex,
-                                                        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-                    }
-                }
-
                 //CensoredWordsIndexes = CensoredWordsIndexes.OrderBy(x => CensoredWords.Keys.ElementAt(x.Key).Length - x.Value).ToDictionary(x => x.Key, x => x.Value);
 
-                for (int i = 0; i < CensoredWordsIndexes.Count; ++i)
+                for (int i = 0; i < CensoredWords.Count; ++i)
                 {
-                    string censoredWord = CensoredWords.Keys.ElementAt(CensoredWordsIndexes.Keys.ElementAt(i));
-                    if (censoredWord.Length > HardFilterKey.Length) continue;
+                    string censoredWord = CensoredWords.ToList()[i];
+                    if (censoredWord.Length > key.Length) continue;
 
-                    if (HardFilterKey.IndexOf(censoredWord, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    if (key.IndexOf(censoredWord, StringComparison.OrdinalIgnoreCase) < 0) continue;
 
                     string regularExpression = ToRegexPattern(censoredWord);
 
@@ -318,7 +219,7 @@ namespace Sweetie_bot
                     censoredText = Regex.Replace(censoredText, regularExpression, StarCensoredMatch,
                                                 RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                     if (censoredText != old)
-                        HardFilterKey = HardFilterKey.Replace(censoredWord, string.Empty);
+                        key = key.Replace(censoredWord, string.Empty);
                 }
             }
             
@@ -334,6 +235,7 @@ namespace Sweetie_bot
                         c = char.ToUpper(c);
                     resultText += c;
                 }
+
             }
 
             return resultText;
@@ -358,12 +260,12 @@ namespace Sweetie_bot
                 string cleanDictText = lText;
                 string currentDict = "";
                 int wordPlace = 0;
-                Dictionary<string, Dictionary<string, string>> dicts = new Dictionary<string, Dictionary<string, string>>();
+                Dictionary<string, List<string>> dicts = new Dictionary<string, List<string>>();
                 string wordString = "";
                 for (int i = 0; i < cleanDictText.Length; ++i)
                 {
                     char lower = char.ToLower(cleanDictText[i]);
-                    bool isalpha = isAlpha(lower) || lower == '\'';
+                    bool isalpha = IsAlpha(lower) || lower == '\'';
                     if (wordPlace < 3)
                     {
                         if (isalpha)
@@ -376,7 +278,7 @@ namespace Sweetie_bot
                     if (wordPlace == 3 || !isalpha || i == cleanDictText.Length - 1)
                     {
                         if (!dicts.ContainsKey(currentDict) && currentDict.Length < 4 && currentDict.Length > 1)
-                            dicts.Add(currentDict, new Dictionary<string, string>());
+                            dicts.Add(currentDict, new List<string>());
                         wordPlace = 0;
                     }
 
@@ -387,8 +289,8 @@ namespace Sweetie_bot
                         if (wordString.Length > 1)
                         {
                             string sub = wordString.Substring(0, Math.Min(wordString.Length, 3));
-                            if (!dicts[sub].ContainsKey(wordString))
-                                dicts[sub].Add(wordString, wordString);
+                            if (!dicts[sub].Contains(wordString))
+                                dicts[sub].Add(wordString);
                         }
                         wordString = "";
                     }
@@ -398,22 +300,22 @@ namespace Sweetie_bot
                 {
                     for (int i = 0; i < dicts.Count; ++i)
                     {
-                        KeyValuePair<string, Dictionary<string, string>> pair = dicts.ElementAt(i);
+                        KeyValuePair<string, List<string>> pair = dicts.ElementAt(i);
                         if (pair.Value.Count > 1)
                         {
-                            Dictionary<string, string> temp = pair.Value.Keys.OrderByDescending(x => x.Length).ToDictionary(x => x, x => x);
+                            List<string> temp = pair.Value.OrderByDescending(x => x.Length).ToList();
                             dicts[pair.Key] = temp;
                         }
                     }
-                    dicts = dicts.OrderByDescending(x => x.Value.Last().Key.Length).ToDictionary(x => x.Key, x => x.Value);
+                    dicts = dicts.OrderByDescending(x => x.Value.Last().Length).ToDictionary(x => x.Key, x => x.Value);
 
-                    for (int i = 0; i < dicts.Count; ++i)
+                    foreach (KeyValuePair<string, List<string>> i in dicts)
                     {
-                        foreach (string word in dicts.Values.ElementAt(i).Keys)
+                        foreach (string word in i.Value)
                         {
-                            if (Dictionary.ContainsKey(dicts.Keys.ElementAt(i)))
+                            if (WordDictionary.ContainsKey(i.Key))
                             {
-                                if (Dictionary[dicts.Keys.ElementAt(i)].ContainsKey(word))
+                                if (WordDictionary[i.Key].Contains(word))
                                 {
                                     string regularExpression = ToRegexPattern(word);
 
@@ -430,31 +332,13 @@ namespace Sweetie_bot
             else return text;
         }
 
-        private static string StarCensoredMatch(Match m)
+        private string StarCensoredMatch(Match m)
         {
             string word = m.Captures[0].Value;
             return new string('¢', word.Length);
         }
 
-        private static string StarCensoredMatchProfanityIndex(Match m)
-        {
-            int index = CensoredWordsCharIndexes[m.Index];
-            //string word = CensoredWords.Keys.ElementAt(index);
-
-            //if (word.Length <= HardFilterKey.Length)
-            //{
-                if (!CensoredWordsIndexes.ContainsKey(index))
-                    CensoredWordsIndexes.Add(index, 3);
-                else
-                    CensoredWordsIndexes[index] += 3;
-            //}
-
-            string match = m.Captures[0].Value;
-            return new string('¢', match.Length);
-            //return match;
-        }
-
-        private static string StarCensoredMatchRemoveApostrophe(Match m)
+        private string StarCensoredMatchRemoveApostrophe(Match m)
         {
             string word = m.Captures[0].Value;
             string result = "";
@@ -464,7 +348,7 @@ namespace Sweetie_bot
             return result;
         }
 
-        private static string EmoteFilter(Match m)
+        private string EmoteFilter(Match m)
         {
             string word = m.Captures[0].Value;
             return ":fluttercry:";
@@ -504,45 +388,44 @@ namespace Sweetie_bot
             return regexPattern;
         }
 
-        public static string RemoveNonAlphaNumeric(string orig)
+        public string RemoveNonAlphaNumeric(string orig)
         {
             for (int i = orig.Length - 1; i >= 0; --i)
             {
-                if (!isAlphaNumeric(orig[i]) && orig[i] != '\0')
+                if (!IsAlphaNumeric(orig[i]) && orig[i] != '\0')
                     orig = orig.Remove(i, 1);
             }
 
             return orig;
         }
 
-        public static string RemoveNonAlphaNumericStar(string orig)
+        public string RemoveNonAlphaNumericStar(string orig)
         {
             for (int i = orig.Length - 1; i >= 0; --i)
             {
-                if (!isAlphaNumericStar(orig[i]) && orig[i] != '\0')
+                if (!IsAlphaNumericStar(orig[i]) && orig[i] != '\0')
                     orig = orig.Remove(i, 1);
             }
 
             return orig;
         }
 
-
-        public static string RemoveSpacing(string orig)
+        public string RemoveSpacing(string orig)
         {
             for (int i = orig.Length - 1; i >= 0; --i)
             {
-                if (isSpacing(orig[i]) && orig[i] != '\0')
+                if (IsSpacing(orig[i]) && orig[i] != '\0')
                     orig = orig.Remove(i, 1);
             }
 
             return orig;
         }
 
-        public static string RefillNonAlphaNumericStar(string orig, string nonAlphaNumericStars)
+        public string RefillNonAlphaNumericStar(string orig, string nonAlphaNumericStars)
         {
             for (int i = 0; i < nonAlphaNumericStars.Length; ++i)
             {
-                if (!isAlphaNumericStar(nonAlphaNumericStars[i]))
+                if (!IsAlphaNumericStar(nonAlphaNumericStars[i]))
                 {
                     string part1 = orig.Substring(0, i);
                     string part2 = orig.Substring(i, orig.Length - i);
@@ -556,11 +439,11 @@ namespace Sweetie_bot
             return orig;
         }
 
-        public static string RefillNonAlphaNumeric(string orig, string nonAlphaNumerics)
+        public string RefillNonAlphaNumeric(string orig, string nonAlphaNumerics)
         {
             for (int i = 0; i < nonAlphaNumerics.Length; ++i)
             {
-                if (!isAlphaNumeric(nonAlphaNumerics[i]))
+                if (!IsAlphaNumeric(nonAlphaNumerics[i]))
                 {
                     string part1 = orig.Substring(0, i);
                     string part2 = orig.Substring(i, orig.Length - i);
@@ -586,7 +469,7 @@ namespace Sweetie_bot
             return orig;
         }
 
-        public static string RefillApostrophes(string orig, string apostrophes)
+        public string RefillApostrophes(string orig, string apostrophes)
         {
             for (int i = 0; i < apostrophes.Length; ++i)
             {
@@ -603,49 +486,8 @@ namespace Sweetie_bot
 
             return orig;
         }
-
-        public static bool isSpacing(char c)
-        {
-            if (char.IsWhiteSpace(c) || c == '_' || c == '-')
-                return true;
-            return false;
-        }
-
-        public static bool isAlphaNumericSpacing(char c)
-        {
-            if (isSpacing(c))
-                return true;
-
-            if (isAlphaNumeric(c))
-                return true;
-
-            return false;
-        }
-
-        public static bool isAlphaNumericStar(char c)
-        {
-            if (c == '¢')
-                return true;
-
-            if (isAlphaNumeric(c))
-                return true;
-            return false;
-        }
-
-        public static bool isAlphaNumeric(char c)
-        {
-            if (isAlpha(c))
-                return true;
-
-            c = Char.ToLower(c);
-
-            if ((int)c > 47 && (int)c < 58)
-                return true;
-
-            return false;
-        }
-
-        public static bool isAlpha(char c)
+        
+        public bool IsAlpha(char c)
         {
             c = Char.ToLower(c);
 
@@ -655,7 +497,29 @@ namespace Sweetie_bot
             return false;
         }
 
-        public static string ReplaceAt(string input, int index, char newChar)
+        public bool IsAlphaNumeric(char c)
+        {
+            c = Char.ToLower(c);
+
+            return ((IsAlpha(c)) || ((int)c > 47 && (int)c < 58));
+        }
+
+        public bool IsSpacing(char c)
+        {
+            return (char.IsWhiteSpace(c) || c == '_' || c == '-');
+        }
+
+        public bool IsAlphaNumericSpacing(char c)
+        {
+            return (IsSpacing(c) || IsAlphaNumeric(c));
+        }
+
+        public bool IsAlphaNumericStar(char c)
+        {
+            return (c == '¢' || IsAlphaNumeric(c));
+        }
+
+        public string ReplaceAt(string input, int index, char newChar)
         {
             if (input == null)
             {
@@ -671,26 +535,34 @@ namespace Sweetie_bot
     {
         public Censor censor;
 
+        public string[] LoadDictFromFile(string dir)
+        {
+            StreamReader words = new StreamReader(dir);
+            string str = words.ReadToEnd().ToLower();
+            str = str.Replace(('\r').ToString(), "");
+            string[] dirArray = str.Split('\n');
+
+            return dirArray;
+        }
+
         // Use this for initialization
         public void Initialize()
         {
             string filterDir = "./filtering/";
-            if (!File.Exists(filterDir + "badWords.txt")){ File.Copy(filterDir + "default_badWords.txt", filterDir + "badWords.txt"); }
-            StreamReader badwords = new StreamReader(filterDir + "badWords.txt");
-            string str = badwords.ReadToEnd().ToLower();
-            str = str.Replace(((char)13).ToString(), "");
-            string[] filteredWords = str.Split('\n');
 
-            Array.Sort(filteredWords, (x, y) => x.Length.CompareTo(y.Length));
-            Array.Reverse(filteredWords);
-
-            Dictionary<string, string> censoredWords = new Dictionary<string, string>();
-            for (int i = 0; i < filteredWords.Length; ++i)
+            if (!File.Exists(filterDir + "badWords.txt"))
             {
-                string filteredWord = filteredWords[i];
-                if (filteredWord.Length < 2) continue;
-                if (!censoredWords.ContainsKey(filteredWord))
-                    censoredWords.Add(filteredWord, filteredWord);
+                File.Copy(filterDir + "default_badWords.txt", filterDir + "badWords.txt");
+            }
+
+            string[] filteredWords =  LoadDictFromFile(filterDir + "badWords.txt");
+
+            HashSet<string> censoredWords = new HashSet<string>();
+            foreach (string word in filteredWords)
+            {
+                if (word.Length < 2) continue;
+                if (!censoredWords.Contains(word))
+                    censoredWords.Add(word);
             }
 
             /*
@@ -701,7 +573,7 @@ namespace Sweetie_bot
             Array.Sort(whitewords, (x, y) => x.Length.CompareTo(y.Length));
             Array.Reverse(whitewords);
 
-            Dictionary<string, string> whitelist = new Dictionary<string, string>();
+            List<string> whitelist = new List<string>();
             for (int i = 0; i < whitewords.Length; i++)
             {
                 string cleanWord = whitewords[i];
@@ -710,137 +582,82 @@ namespace Sweetie_bot
             }
             */
 
-            if (!File.Exists(filterDir + "cleanDict.txt")) { File.Copy(filterDir + "default_cleanDict.txt", filterDir + "cleanDict.txt"); }
-            StreamReader dict = new StreamReader(filterDir + "cleanDict.txt");
-            string dictstr = dict.ReadToEnd().ToLower();
-            dictstr = dictstr.Replace(((char)13).ToString(), "");
-            string[] dictionary = dictstr.Split('\n');
-
-            Array.Sort(dictionary, (x, y) => x.Length.CompareTo(y.Length));
-            Array.Reverse(dictionary);
-            Array.Sort(dictionary);
-
-            Dictionary<string, Dictionary<string, string>> dividedDict = new Dictionary<string, Dictionary<string, string>>();
-            char previousFirstLetter = (char)0;
-            char previousSecondLetter = (char)0;
-            char previousThirdLetter = (char)0;
-            string charDiv = "";
-            for (int i = 0; i < dictionary.Length; ++i)
+            if (!File.Exists(filterDir + "cleanDict.txt"))
             {
-                string word = dictionary[i];
+                File.Copy(filterDir + "default_cleanDict.txt", filterDir + "cleanDict.txt");
+            }
+            
+            string[] dictionary = LoadDictFromFile(filterDir + "cleanDict.txt");
+
+            Dictionary<string, HashSet<string>> dividedDict = new Dictionary<string, HashSet<string>>();
+            string prevSubst = "";
+            string charDiv = "";
+            foreach (string word in dictionary)
+            {
                 if (word.Length > 1)
                 {
-                    if (word[0] != previousFirstLetter || word[1] != previousSecondLetter || (word.Length > 2 && word[2] != previousThirdLetter))
+                    if (word.Substring(0, Math.Min(word.Length, 3)) != prevSubst)
                     {
-                        if (charDiv != "")
-                        {
-                            List<string> temp = dividedDict[charDiv].Values.ToList();
-                            temp.Sort((x, y) => x.Length.CompareTo(y.Length));
-                            temp.Reverse();
-                            dividedDict[charDiv] = temp.ToDictionary(x => x, x => x);
-                        }
                         charDiv = "" + word[0] + word[1];
                         if (word.Length == 2 && !dividedDict.ContainsKey(charDiv))
-                            dividedDict.Add(charDiv, new Dictionary<string, string>());
+                            dividedDict.Add(charDiv, new HashSet<string>());
 
                         if (word.Length > 2) charDiv += word[2];
 
                         if (!dividedDict.ContainsKey(charDiv))
-                            dividedDict.Add(charDiv, new Dictionary<string, string>());
-                        
-                        previousFirstLetter = word[0];
-                        previousSecondLetter = word[1];
-                        if (word.Length > 2)  previousThirdLetter = word[2];
+                            dividedDict.Add(charDiv, new HashSet<string>());
+
+                        prevSubst = word.Substring(0, Math.Min(word.Length, 3));
                     }
-                    dividedDict[charDiv].Add(word, word);
+                    dividedDict[charDiv].Add(word);
                 }
             }
             
             censor = new Censor(censoredWords, dividedDict);
         }
 
-        public bool DictContains(string word, string substring)
-        {
-            return censor.DictContains(word, substring);
-        }
-
-        public bool DictContainsSub(string substring)
-        {
-            return censor.DictContainsSub(substring);
-        }
-
-        public void DictAdd(string word, string substring)
-        {
-            censor.DictAdd(word, substring);
-        }
-
-        public void DictAddSub(string substring)
-        {
-            censor.DictAddSub(substring);
-        }
-
-        public void DictRemove(string word, string substring)
-        {
-            censor.DictRemove(word, substring);
-        }
-
         public void UpdateDictionary()
         {
             List<string> cleanDict = new List<string>();
-            foreach (string key in Censor.Dictionary.Keys)
+            foreach (string key in censor.WordDictionary.Keys)
             {
-                Dictionary<string, string> subDict = Censor.Dictionary[key];
-                cleanDict.AddRange(subDict.Keys);
+                HashSet<string> subDict = censor.WordDictionary[key];
+                cleanDict.AddRange(subDict);
             }
             File.WriteAllLines("filtering/cleanDict.txt", cleanDict.ToArray());
         }
 
-        public bool FilterContains(string word)
-        {
-            return censor.FilterContains(word);
-        }
-
-        public void FilterAdd(string word)
-        {
-            censor.FilterAdd(word);
-        }
-
-        public void FilterRemove(string word)
-        {
-            censor.FilterRemove(word);
-        }
-
         public void UpdateFilter()
         {
-            string[] badwords = Censor.CensoredWords.Keys.ToArray();
+            string[] badwords = censor.CensoredWords.ToArray();
             File.WriteAllLines("filtering/badwords.txt", badwords);
         }
 
         public void ClearDuplicates()
         {
-            Dictionary<string, string> CensoredWords = Censor.CensoredWords;
-            Dictionary<string, string> cleared = new Dictionary<string, string>();
+            HashSet<string> CensoredWords = censor.CensoredWords;
+            HashSet<string> cleared = new HashSet<string>();
             for (int i = 0; i < CensoredWords.Count; ++i)
             {
                 //string word = Censor.RemoveSpacing(CensoredWords.ElementAt(i).Value);
-                string word = CensoredWords.ElementAt(i).Value;
-                if (!cleared.ContainsKey(word))
+                string word = CensoredWords.ToList()[i];
+                if (!cleared.Contains(word))
                 {
-                    cleared.Add(word, word);
+                    cleared.Add(word);
                 }
             }
 
-            File.WriteAllLines(@"C:\Users\Public\TestFolder\badwords.txt", cleared.Values.ToArray());
+            File.WriteAllLines(@"C:\Users\Public\TestFolder\badwords.txt", cleared.ToArray());
         }
 
         public void WriteProfanityVariants()
         {
             /*
-            Dictionary<string, string> CensoredWords = censor.CensoredWords;
-            Dictionary<string, string> WhiteList = censor.WhiteList;
+            List<string> CensoredWords = censor.CensoredWords;
+            List<string> WhiteList = censor.WhiteList;
 
             string[] variantSuffixes = new string[] { "s", "es", "er", "ed", "ers", "ing" };
-	        Dictionary<string, string> variants = new Dictionary<string, string>();
+	        List<string> variants = new List<string>();
 
 	        for (int i = 0; i < CensoredWords.Count; i++)
 	        {
@@ -883,7 +700,7 @@ namespace Sweetie_bot
                 string word = dictionary[i];
                 if (word.Contains("*"))
                 {
-                    if (!Censor.CensoredWords.ContainsKey(actualDictionary[i]))
+                    if (!censor.CensoredWords.Contains(actualDictionary[i]))
                         whitelist.Add(actualDictionary[i]);
                 }
             }
@@ -895,7 +712,7 @@ namespace Sweetie_bot
         public void WriteCleanDictionary()
         {
             ///*
-            Dictionary<string, string> CensoredWords = Censor.CensoredWords;
+            HashSet<string> CensoredWords = censor.CensoredWords;
             
             StreamReader dict = new StreamReader(AppDomain.CurrentDomain.BaseDirectory + "filtering/dictionary.txt");
             string dictstr = dict.ReadToEnd().ToLower();
@@ -911,7 +728,7 @@ namespace Sweetie_bot
                 if (actualWord.Length < 2)
                     continue;
 
-                bool foundbad = CensoredWords.ContainsKey(actualWord);
+                bool foundbad = CensoredWords.Contains(actualWord);
 
                 if (foundbad) continue;
 

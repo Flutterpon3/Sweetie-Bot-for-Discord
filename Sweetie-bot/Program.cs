@@ -375,12 +375,12 @@ namespace Sweetie_bot
                                 if (message.Length > 1)
                                 {
                                     string substring = message.Substring(0, Math.Min(message.Length, 3));
-                                    if (!censorshipManager.DictContainsSub(substring))
-                                        censorshipManager.DictAddSub(substring);
+                                    if (!censorshipManager.censor.WordDictionary.ContainsKey(substring))
+                                        censorshipManager.censor.WordDictionary.Add(substring, new HashSet<string>());
 
-                                    if (!censorshipManager.DictContains(message, substring))
+                                    if (!censorshipManager.censor.WordDictionary[substring].Contains(message))
                                     {
-                                        censorshipManager.DictAdd(message, substring);
+                                        censorshipManager.censor.WordDictionary[substring].Add(message);
                                         await e.Channel.SendMessage(message + " added to dictionary!");
                                         changed = true;
                                     }
@@ -394,10 +394,10 @@ namespace Sweetie_bot
                                 if (message.Length > 1)
                                 {
                                     string substring = message.Substring(0, Math.Min(message.Length, 3));
-                                    if (censorshipManager.DictContainsSub(substring) &&
-                                        censorshipManager.DictContains(message, substring))
+                                    if (censorshipManager.censor.WordDictionary.ContainsKey(substring) &&
+                                        censorshipManager.censor.WordDictionary[substring].Contains(message))
                                     {
-                                        censorshipManager.DictRemove(message, substring);
+                                        censorshipManager.censor.DictRemove(message, substring);
                                         await e.Channel.SendMessage(message + " removed from dictionary!");
                                         changed = true;
                                     }
@@ -431,9 +431,9 @@ namespace Sweetie_bot
                                 message = e.GetArg("Message").ToLower();
                                 if (message.Length > 2)
                                 {
-                                    if (!censorshipManager.FilterContains(message))
+                                    if (!censorshipManager.censor.CensoredWords.Contains(message))
                                     {
-                                        censorshipManager.FilterAdd(message);
+                                        censorshipManager.censor.CensoredWords.Add(message);
                                         await e.Channel.SendMessage(message + " added to profanity list!");
                                         changed = true;
                                     }
@@ -446,9 +446,9 @@ namespace Sweetie_bot
                                 message = e.GetArg("Message").ToLower();
                                 if (message.Length > 2)
                                 {
-                                    if (censorshipManager.FilterContains(message))
+                                    if (censorshipManager.censor.CensoredWords.Contains(message))
                                     {
-                                        censorshipManager.FilterRemove(message);
+                                        censorshipManager.censor.CensoredWords.Remove(message);
                                         await e.Channel.SendMessage(message + " removed from profanity list!");
                                         changed = true;
                                     }
