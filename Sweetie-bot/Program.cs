@@ -512,11 +512,17 @@ namespace Sweetie_bot
                 .Do(async e =>
                 {
                     await e.Channel.SendMessage(
-                        "General rules:\n- NOTHING illegal (as in no IRL little nekkid girls) \n" +
-                        "- No child model shots, like provocative poses, swimsuits, or underwear." +
-                        " Nothing against it, but it's not what this server is about and makes some uncomfortable. \n" +
-                        "- Listen to the Club Room Managers\n-" +
-                        " Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
+                        "1. Keep posts appropriate for the channel you're in. Anything dark or rape related goes in #noncon-grimdark. Real bestiality (among other things) goes in #extreme-kink-general and should have thumbnails disabled and a warning attached to it since it's not legal everywhere." +
+                        "\n" +
+                        "2. NOTHING illegal(as in IRL little nekkid kids)" +
+                        "\n" +
+                        "a.) No child model shots, like provocative poses, swimsuits, or underwear.Nothing against it, but it's not what this server is about and makes some uncomfortable." +
+                        "\n" +
+                        "b.) For the safety of the server, also please don't post porn with teen-looking (or younger- looking) real-life people." +
+                        "\n" +
+                        "3. Listen to the Club Room Managers(aka.Gabby Griffon)" +
+                        "\n" +
+                        "4. Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
 
             _client.GetService<CommandService>().CreateCommand("timeout")
@@ -737,8 +743,8 @@ namespace Sweetie_bot
                         {
                             await e.User.AddRoles(e.Server.FindRoles("@everypone").ToArray());
                             await e.Channel.SendMessage(string.Format("There you go {0}.", e.User.ToString()));
-                            System.Threading.Thread.Sleep(100);
-                            await e.Channel.SendMessage("Now you can join the loli/shota channels with `!Loli join`");
+                            //System.Threading.Thread.Sleep(100);
+                            //await e.Channel.SendMessage("Now you can join the loli/shota channels with `!Loli join`");
                         }
                         else
                         {
@@ -747,6 +753,7 @@ namespace Sweetie_bot
                     }
                 });
 
+            /*
             _client.GetService<CommandService>().CreateGroup("Loli", loli =>
             {
                 loli.CreateCommand("join")
@@ -778,6 +785,7 @@ namespace Sweetie_bot
                         }
                     });
             });
+            */
 
             _client.MessageUpdated += async (s, e) =>
             {
@@ -893,12 +901,18 @@ namespace Sweetie_bot
                 System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("Im the local bot, Sweetie-Bot! \n I do a *lot* of cool things.");
                 System.Threading.Thread.Sleep(500);
-                await e.User.SendMessage("If you are 18, confirm it by typing '!Iam18' in the general chat and I will add you to the 18+ channels.");
+                await e.User.SendMessage("If you are 18, confirm it by typing '!Iam18' in the general chat, and I will add you to the 18+ channels.");
                 System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("(Don't lie, if it is revealed that you confirmed your age falsely, you could get banned.)");
+                //System.Threading.Thread.Sleep(500);
+                //await e.User.SendMessage("I can't tell you everything I can do right now; that would take up too much space!");
                 System.Threading.Thread.Sleep(500);
-                await e.User.SendMessage("I can't tell you everything I can do right now, that would take up too much space!" +
-                    " Type '!rules' to get the server rules at anytime, and '!help' to find out all the other stuff I can do.");
+                await e.User.SendMessage("Type '!rules' to get the server rules at anytime and '!help' to find out all the other stuff I can do.");
+                System.Threading.Thread.Sleep(500);
+                await e.User.SendMessage("I can't accept commands via PM, so you'll have to send those in the general chat.");
+                System.Threading.Thread.Sleep(500);
+                await e.User.SendMessage("Our server uses the Better Ponymotes Discord plugin for added flare. If you want to see and post pony emotes, check out the plugin:\n" +
+                    "https://github.com/ByzantineFailure/BPM-for-Discord/releases/tag/discord-v0.9.0-beta");
                 System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("I hope you have a fun time here!");
             };
