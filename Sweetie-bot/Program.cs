@@ -130,7 +130,7 @@ namespace Sweetie_bot
 
         List<string> meResponsesClean = new List<string>()
         {
-            "gasps, \"Hey!\"",
+            "gasps. \"Hey!\"",
             "shrinks away from {0}.",
             "tilts head, staring at {0} curiously.",
             "goes to {0}, nuzzling their leg.",
@@ -173,28 +173,27 @@ namespace Sweetie_bot
 
         List<string> magic8nsfw = new List<string>()
         {
-            "If I say yes, will you fuck me already?",
+            "If I say yes, will you rut me already?",
             "Asking that is like asking if I'm horny, YES!",
-            "Thats as likely as getting me on Big Mac.",
+            "That's as likely as getting me on Big Mac.",
             "Uhh... no. Fucking, of course not."
         };
 
         List<string> nsfwChannels = new List<string>(new string[] {
-            "general-nsfw",
+            "nsfw-general",
             "non-mlp-young",
-            "filly-only",
-            "filly-colt",
-            "colt-only",
-            "filly-x-male",
-            "filly-x-female",
-            "colt-x-male",
-            "colt-x-female",
+            "fillies",
+            "colts",
+            "humanized-fillies",
+            "humanized-colts",
             "mlp-loli",
             "mlp-shota",
             "roleplay",
-            "mlp-loli-x-shota",
-            "extreme-fetish-general",
-            "extreme-fetish-loli-n-shota"
+            "extreme-kink-general",
+            "noncon-grimdark",
+            "noncon",
+            "grimdark",
+            "extreme-humanized"
         });
 
         private static char PonyRolePrefix = '^';
@@ -248,7 +247,7 @@ namespace Sweetie_bot
 
         bool HasManagerialRolePrerequisites(CommandEventArgs e)
         {
-            Role[] managerRole = e.Server.FindRoles("Club Room Manager").ToArray();
+            Role[] managerRole = e.Server.FindRoles("Gabby Griffon").ToArray();
             Role[] technicianRole = e.Server.FindRoles("Sweetie-Bot Technician").ToArray();
             return (managerRole.Length > 0 && e.User.HasRole(managerRole[0])) ||
                 (technicianRole.Length > 0 && e.User.HasRole(technicianRole[0]));
@@ -256,7 +255,7 @@ namespace Sweetie_bot
 
         bool HasManagerialRolePrerequisites(MessageEventArgs e)
         {
-            Role[] managerRole = e.Server.FindRoles("Club Room Manager").ToArray();
+            Role[] managerRole = e.Server.FindRoles("Gabby Griffon").ToArray();
             Role[] technicianRole = e.Server.FindRoles("Sweetie-Bot Technician").ToArray();
             return (managerRole.Length > 0 && e.User.HasRole(managerRole[0])) ||
                 (technicianRole.Length > 0 && e.User.HasRole(technicianRole[0]));
@@ -514,13 +513,13 @@ namespace Sweetie_bot
                     await e.Channel.SendMessage(
                         "1. Keep posts appropriate for the channel you're in. Anything dark or rape related goes in #noncon-grimdark. Real bestiality (among other things) goes in #extreme-kink-general and should have thumbnails disabled and a warning attached to it since it's not legal everywhere." +
                         "\n" +
-                        "2. NOTHING illegal (as in IRL little nekkid kids)" +
+                        "2. NOTHING illegal(as in IRL little nekkid kids)" +
                         "\n" +
-                        "a.) No child model shots, like provocative poses, swimsuits, or underwear.Nothing against it, but it's not what this server is about and makes some uncomfortable." +
+                        "a.) No child model shots, like provocative poses, swimsuits, or underwear. Nothing against it, but it's not what this server is about and makes some uncomfortable." +
                         "\n" +
                         "b.) For the safety of the server, also please don't post porn with teen-looking (or younger- looking) real-life people." +
                         "\n" +
-                        "3. Listen to the Club Room Managers (aka.Gabby Griffon)" +
+                        "3. Listen to the moderators (aka. Gabby Griffon)" +
                         "\n" +
                         "4. Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
@@ -719,7 +718,7 @@ namespace Sweetie_bot
                                 await e.Channel.SendMessage("D-don't tell Rarity about this. Ohh!");
                                 break;
                             case 6:
-                                await e.Channel.SendMessage("... Ohh, im gonna be sore for a bit...");
+                                await e.Channel.SendMessage("... Ohh, I'm gonna be sore for a bit...");
                                 break;
                             default:
                                 await e.Channel.SendMessage("Could you take a break? I'm still sore...");
@@ -734,7 +733,7 @@ namespace Sweetie_bot
                 });
 
             _client.GetService<CommandService>().CreateCommand("Iam18")
-                .Description("Confirm you are 18, and add puts you in the 18+ channels.")
+                .Description("Confirms you are 18, and puts you in the 18+ channels.")
                 .Do(async e =>
                 {
                     if (!e.Message.Channel.IsPrivate)
@@ -753,7 +752,7 @@ namespace Sweetie_bot
                     }
                 });
 
-            /*
+            /* Commented out after Discord clarified thier ToS.
             _client.GetService<CommandService>().CreateGroup("Loli", loli =>
             {
                 loli.CreateCommand("join")
@@ -911,7 +910,7 @@ namespace Sweetie_bot
                 System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("I can't accept commands via PM, so you'll have to send those in the general chat.");
                 System.Threading.Thread.Sleep(500);
-                await e.User.SendMessage("Our server uses the Better Ponymotes Discord plugin for added flare. If you want to see and post pony emotes, check out the plugin:\n" +
+                await e.User.SendMessage("Our server uses the Better Ponymotes plugin for added flare. If you want to see and post pony emotes, check out the BPM Discord plugin:\n" +
                     "https://github.com/ByzantineFailure/BPM-for-Discord/releases/tag/discord-v0.9.0-beta");
                 System.Threading.Thread.Sleep(500);
                 await e.User.SendMessage("I hope you have a fun time here!");
