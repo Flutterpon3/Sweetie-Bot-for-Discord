@@ -514,13 +514,13 @@ namespace Sweetie_bot
                     await e.Channel.SendMessage(
                         "1. Keep posts appropriate for the channel you're in. Anything dark or rape related goes in #noncon-grimdark. Real bestiality (among other things) goes in #extreme-kink-general and should have thumbnails disabled and a warning attached to it since it's not legal everywhere." +
                         "\n" +
-                        "2. NOTHING illegal(as in IRL little nekkid kids)" +
+                        "2. NOTHING illegal (as in IRL little nekkid kids)" +
                         "\n" +
                         "a.) No child model shots, like provocative poses, swimsuits, or underwear.Nothing against it, but it's not what this server is about and makes some uncomfortable." +
                         "\n" +
                         "b.) For the safety of the server, also please don't post porn with teen-looking (or younger- looking) real-life people." +
                         "\n" +
-                        "3. Listen to the Club Room Managers(aka.Gabby Griffon)" +
+                        "3. Listen to the Club Room Managers (aka.Gabby Griffon)" +
                         "\n" +
                         "4. Lastly, don't be an ass. <:rainbowdetermined2:250101115872346113>");
                 });
